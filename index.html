@@ -137,9 +137,6 @@
     .pl-table tr:last-child td{border-bottom:none}
     .pl-table .pl-pts{font-weight:700;color:var(--accent)}
     .pl-table .pl-rank{display:inline-block;width:14px;color:var(--text-3);font-size:calc(11px*var(--fs))}
-    .pl-table:not(.all) .pl-extra{display:none}
-    .pl-more{border:none;background:none;cursor:pointer;font:600 calc(11.5px*var(--fs)) 'DM Sans',sans-serif;color:var(--text-2);padding:6px 0 2px}
-    .pl-more:hover{color:var(--accent)}
     .pl-note{font-size:calc(11px*var(--fs));color:var(--text-3);margin-top:5px;line-height:1.4}
 
     /* ── ACCESSIBILITY MENU ── */
@@ -978,7 +975,7 @@ const PCOLS = [
   { k: 'share', h: '% EQ',  t: 'Porcentaje de los puntos del equipo (según las actas)', v: (p, tot) => tot ? p.pts / tot : 0, f: x => Math.round(100 * x) + '%' },
 ];
 // Sort state of the players table: 'default' = scoring order (plus PLAYER_ORDER); kept while switching teams
-const PL = { key: 'default', dir: -1, all: false };
+const PL = { key: 'default', dir: -1 };
 
 function sortPlayers(key) {
   if (PL.key === key) PL.dir = -PL.dir; else { PL.key = key; PL.dir = key === 'fc' ? 1 : -1; }
@@ -1010,12 +1007,11 @@ function playersHTML(tid) {
     ['⏱️', 'Más minutos', best(regular, p => p.min / p.pj), p => Math.round(p.min / p.pj) + ' min/p'],
   ].filter(l => l[2] && (l[1] !== 'Más triples' || l[2].t3 > 0));
 
-  const TOP = 8;
   const th = c => {
     const on = PL.key === c.k;
     return `<th aria-sort="${on ? (PL.dir < 0 ? 'descending' : 'ascending') : 'none'}"><button class="pl-sort${on ? ' on' : ''}" data-k="${c.k}" onclick="sortPlayers('${c.k}')" title="${c.t} · clic para ordenar">${c.h}${on ? (PL.dir < 0 ? ' ▾' : ' ▴') : ''}</button></th>`;
   };
-  const row = (p, i) => `<tr${i >= TOP ? ' class="pl-extra"' : ''}><td><span class="pl-rank">${i + 1}</span>${esc(p.n)}</td>${PCOLS.map(c => {
+  const row = (p, i) => `<tr><td><span class="pl-rank">${i + 1}</span>${esc(p.n)}</td>${PCOLS.map(c => {
     const v = c.v(p, total);
     return `<td${c.cls ? ` class="${c.cls}"` : ''}>${c.f ? c.f(v, p) : v}</td>`;
   }).join('')}</tr>`;
@@ -1026,13 +1022,12 @@ function playersHTML(tid) {
     <div class="sec">Jugadores · ${list.length}</div>
     ${leaders.length ? `<div class="pl-leaders">${leaders.map(([ico, label, p, fmt]) => `<div class="card pl-leader"><span class="pl-ico" aria-hidden="true">${ico}</span><div><small>${label}</small><b>${esc(p.n)}</b><span>${fmt(p)}</span></div></div>`).join('')}</div>` : ''}
     <div class="pl-scroll card">
-      <table class="pl-table${PL.all ? ' all' : ''}">
+      <table class="pl-table">
         <thead><tr><th><button class="pl-sort${PL.key === 'default' ? ' on' : ''}" onclick="sortPlayers('default')" title="Orden por defecto">Jugador</button></th>${PCOLS.map(th).join('')}</tr></thead>
         <tbody>${list.map(row).join('')}</tbody>
         <tfoot><tr><td>Equipo</td><td></td><td></td><td></td><td>${total}</td><td></td><td>${tl[0]}</td><td>${tl[1]}</td><td>${tl[2]}/${tl[3]}</td><td>${tl[3] ? Math.round(100 * tl[2] / tl[3]) + '%' : '–'}</td><td></td><td></td></tr></tfoot>
       </table>
     </div>
-    ${list.length > TOP && !PL.all ? `<button class="pl-more" onclick="PL.all = true; this.previousElementSibling.querySelector('table').classList.add('all'); this.remove()">Ver los ${list.length - TOP} restantes ▾</button>` : ''}
     <div class="pl-note">Pulsa una columna para ordenar. Según las actas digitales de la Federació, que puede que no incluyan todos los partidos: de los tiros de 2 y triples solo se registran los anotados, y las faltas por partido llegan redondeadas. Nombres abreviados.</div>
   </div>`;
 }
