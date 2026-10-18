@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Cadet Interterritorial</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+  <script src="data/cadet-data.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;overflow:hidden}
+
+    /* ── LIGHT THEME (default) ── */
+    :root{
+      --fs:1;   /* text scale, set from the accessibility menu */
+      --bg:#f0f2f7; --bg-header:#fff; --bg-left:#e8ebf4; --bg-left-tab:#e0e4f0; --bg-left-head:#d0d5e8;
+      --bg-center:#f4f6fc; --bg-right:#edf0f8; --bg-card:#fff; --bg-card-box:#d0d4e8;
+      --border:rgba(30,35,80,.12); --border-sub:rgba(30,35,80,.08);
+      /* Text colours meet WCAG AA (≥4.5:1) on every panel background */
+      --text:#1a1d2e; --text-2:#3a3f5c; --text-3:#5a5f78;
+      --accent:#9a4d00; --accent-bg:rgba(255,140,0,.14); --focus:#0b57d0;
+      --map-team:#c8e6c9; --map-team-h:#a5d6a7; --map-empty:#e3e6ef; --map-empty-h:#d4d8e4; --map-border:#c5c8d8; --map-prov:#8f94ad;
+      --row-hover:rgba(30,35,80,.05); --won:#15803d; --lost:#b91c1c; --won-text:#15803d; --lost-text:#b91c1c;
+      --shadow:0 1px 6px rgba(30,35,80,.08);
+    }
+    body.dark{
+      --bg:#08080f; --bg-header:#09090f; --bg-left:#0a0a16; --bg-left-tab:#0d0d1e; --bg-left-head:#0c0c1e;
+      --bg-center:#06060c; --bg-right:#0a0a16; --bg-card:#10101e; --bg-card-box:#1a1a2e;
+      --border:rgba(255,255,255,.09); --border-sub:rgba(255,255,255,.05);
+      --text:#ececf4; --text-2:#c8c8d8; --text-3:#a6a6bb;
+      --accent:#ff9a1f; --accent-bg:rgba(255,140,0,.16); --focus:#8ab4ff;
+      --map-team:#183020; --map-team-h:#2a4a38; --map-empty:#111118; --map-empty-h:#1a1a28; --map-border:#23233a; --map-prov:#4a4a6a;
+      --row-hover:rgba(255,255,255,.04); --won:#15803d; --lost:#b91c1c; --won-text:#4ade80; --lost-text:#f87171;
+      --shadow:0 1px 6px rgba(0,0,0,.4);
+    }
+    /* High contrast: pure black/white, yellow accent, visible borders (overrides light/dark) */
+    body.hc{
+      --bg:#000; --bg-header:#000; --bg-left:#000; --bg-left-tab:#000; --bg-left-head:#1c1c1c;
+      --bg-center:#000; --bg-right:#000; --bg-card:#000; --bg-card-box:#222;
+      --border:#fff; --border-sub:#8a8a8a;
+      --text:#fff; --text-2:#fff; --text-3:#e6e6e6;
+      --accent:#ffd400; --accent-bg:rgba(255,212,0,.22); --focus:#00e5ff;
+      --map-team:#1f7a3d; --map-team-h:#2e9e53; --map-empty:#141414; --map-empty-h:#262626; --map-border:#6b6b6b; --map-prov:#fff;
+      --row-hover:#1c1c1c; --won:#15803d; --lost:#b91c1c; --won-text:#4ade80; --lost-text:#f87171; --shadow:none;
+    }
+    body.hc .card,body.hc .pill-btn,body.hc .act,body.hc .g-tab,body.hc #map-tools button,body.hc #legend,body.hc #search{border-width:2px}
+    body.hc .s-row{border-bottom-color:#555}
+    body.hc .s-row.highlighted{outline:2px solid var(--accent);outline-offset:-2px}
+
+    /* Keyboard focus: always visible, never colour-only */
+    :focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:6px}
+    .s-row:focus-visible,.e-card:focus-visible,.sr-item:focus-visible{outline-offset:-3px}
+    .dot:focus{outline:none}
+    .dot:focus-visible .core{stroke:var(--focus);stroke-width:3px}
+    .skip-link{position:absolute;left:8px;top:-60px;z-index:500;background:var(--bg-card);color:var(--text);padding:8px 14px;border-radius:8px;border:2px solid var(--focus);font-weight:700;text-decoration:none}
+    .skip-link:focus{top:8px}
+
+    /* Reduced motion (system setting or the accessibility menu) */
+    body.reduce-motion *,body.reduce-motion *::before,body.reduce-motion *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;transition:background .3s,color .3s}
+    .bebas{font-family:'Bebas Neue',sans-serif}
+
+    /* ── HEADER ── */
+    #header{border-bottom:1px solid var(--border);padding:10px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;background:var(--bg-header)}
+    #title{font-weight:400;font-size:calc(22px*var(--fs));letter-spacing:2px;line-height:1;color:var(--accent)}
+    #subtitle{color:var(--text-2);font-size:calc(12px*var(--fs));margin-top:2px}
+    .hdr-right{display:flex;align-items:center;gap:10px}
+    .pill-btn{display:flex;align-items:center;gap:8px;cursor:pointer;min-height:34px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-2);font-size:calc(13px*var(--fs));font-family:'DM Sans',sans-serif;transition:all .2s;user-select:none;text-decoration:none;white-space:nowrap}
+    .pill-btn:hover{background:var(--accent-bg);border-color:var(--accent)}
+    .opt{color:var(--text-3);font-weight:600;letter-spacing:.04em;transition:color .2s}
+    .opt.active{color:var(--accent)}
+    .toggle-track{width:32px;height:18px;border-radius:9px;background:var(--border);position:relative;transition:background .25s;flex-shrink:0}
+    .toggle-thumb{width:13px;height:13px;border-radius:50%;background:#fff;position:absolute;top:2.5px;left:2.5px;transition:transform .25s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+    .on .toggle-track{background:var(--accent)}
+    .on .toggle-thumb{transform:translateX(14px)}
+
+
+    /* ── SEARCH ── */
+    #search-wrap{position:relative;flex:1;max-width:400px;margin:0 6px}
+    #search-wrap::before{content:'🔍';position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:calc(13px*var(--fs));opacity:.55;pointer-events:none}
+    #search{width:100%;padding:7px 34px 7px 32px;border-radius:20px;border:1px solid var(--border);background:var(--bg);color:var(--text);font:calc(13px*var(--fs)) 'DM Sans',sans-serif;outline:none;transition:border-color .15s,box-shadow .15s}
+    #search::placeholder{color:var(--text-3)}
+    #search:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+    #search-key{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:calc(11px*var(--fs));color:var(--text-3);border:1px solid var(--border);border-radius:4px;padding:0 5px;pointer-events:none}
+    #search:focus + #search-key{display:none}
+    #search-results{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.2);max-height:min(70vh,520px);overflow-y:auto;z-index:100;display:none}
+    #search-results.open{display:block}
+    .sr-sec{font-size:calc(11px*var(--fs));font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);padding:9px 12px 4px}
+    .sr-item{display:flex;align-items:center;gap:9px;padding:7px 12px;cursor:pointer;font-size:calc(13px*var(--fs))}
+    .sr-item.active,.sr-item:hover{background:var(--accent-bg)}
+    .sr-main{flex:1;min-width:0}
+    .sr-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .sr-sub{font-size:calc(11px*var(--fs));color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .sr-tag{font-size:calc(11px*var(--fs));font-weight:700;padding:1px 6px;border-radius:8px;color:#fff;flex-shrink:0}
+    .sr-empty{padding:16px 12px;color:var(--text-3);font-size:calc(13px*var(--fs));text-align:center}
+
+    /* ── TEAM CARD ACTIONS / FAVOURITES / CALENDAR ── */
+    .tc-top{position:relative;padding-right:48px}
+    .fav-btn{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;border:none;background:rgba(255,255,255,.2);color:#fff;font-size:calc(16px*var(--fs));line-height:30px;cursor:pointer;transition:transform .15s,background .15s}
+    .fav-btn:hover{transform:scale(1.1);background:rgba(255,255,255,.32)}
+    .fav-btn.on{background:#fff;color:#e9a23b}
+    .tc-actions{display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px 2px}
+    .act{display:inline-flex;align-items:center;gap:5px;min-height:32px;padding:5px 12px;border-radius:16px;border:1px solid var(--border);background:var(--bg-right);color:var(--text-2);font:600 calc(12px*var(--fs)) 'DM Sans',sans-serif;cursor:pointer;text-decoration:none;white-space:nowrap}
+    .act:hover{border-color:var(--accent);color:var(--accent)}
+    details.cal{margin-top:12px;border:1px solid var(--border-sub);border-radius:8px}
+    details.cal summary{cursor:pointer;padding:7px 10px;font-size:calc(12px*var(--fs));font-weight:600;color:var(--text-2);list-style:none;display:flex;justify-content:space-between}
+    details.cal summary::-webkit-details-marker{display:none}
+    details.cal summary::after{content:'▾';transition:transform .2s}
+    details.cal[open] summary::after{transform:rotate(180deg)}
+    details.cal .cal-list{padding:0 10px 6px;max-height:320px;overflow-y:auto}
+    .g-row.cal-next{background:var(--accent-bg);margin:0 -10px;padding-left:10px;padding-right:10px}
+    .s-fav{color:#e9a23b;margin-right:3px}
+    .fav-tag{font-size:calc(11px*var(--fs));font-weight:700;padding:1px 5px;border-radius:6px;background:var(--bg-left-tab);color:var(--text-2)}
+
+    #toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,16px);background:var(--text);color:var(--bg);padding:8px 16px;border-radius:20px;font-size:calc(13px*var(--fs));font-weight:600;opacity:0;transition:opacity .2s,transform .2s;z-index:300;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+    #toast.show{opacity:1;transform:translate(-50%,0)}
+
+    /* ── PLAYERS ── */
+    .pl-table{width:100%;border-collapse:collapse;font-size:calc(12px*var(--fs));font-variant-numeric:tabular-nums}
+    .pl-table th{font-size:calc(11px*var(--fs));font-weight:700;letter-spacing:.05em;color:var(--text-3);text-align:right;padding:4px 4px;border-bottom:1px solid var(--border-sub);white-space:nowrap}
+    .pl-table td{padding:5px 4px;text-align:right;border-bottom:1px solid var(--border-sub);white-space:nowrap}
+    .pl-table th:first-child,.pl-table td:first-child{text-align:left;width:100%;white-space:normal}
+    .pl-table tr:last-child td{border-bottom:none}
+    .pl-table .pl-pts{font-weight:700;color:var(--accent)}
+    .pl-table .pl-rank{display:inline-block;width:14px;color:var(--text-3);font-size:calc(11px*var(--fs))}
+    .pl-table:not(.all) .pl-extra{display:none}
+    .pl-more{border:none;background:none;cursor:pointer;font:600 calc(11.5px*var(--fs)) 'DM Sans',sans-serif;color:var(--text-2);padding:6px 0 2px}
+    .pl-more:hover{color:var(--accent)}
+    .pl-note{font-size:calc(11px*var(--fs));color:var(--text-3);margin-top:5px;line-height:1.4}
+
+    /* ── ACCESSIBILITY MENU ── */
+    #a11y-wrap{position:relative}
+    #a11y-menu{position:absolute;right:0;top:calc(100% + 8px);z-index:200;width:min(300px,calc(100vw - 24px));background:var(--bg-card);color:var(--text);border:2px solid var(--border);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.25);padding:14px;display:none}
+    #a11y-menu.open{display:block}
+    #a11y-menu h2{font-size:calc(14px*var(--fs));margin-bottom:10px}
+    .a11y-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--border-sub);font-size:calc(13px*var(--fs))}
+    .a11y-row small{display:block;color:var(--text-3);font-size:calc(11px*var(--fs));margin-top:2px}
+    .fs-ctrl{display:flex;align-items:center;gap:6px}
+    .fs-ctrl button,.sw{min-width:38px;min-height:38px;border-radius:8px;border:2px solid var(--border);background:var(--bg);color:var(--text);font:700 calc(14px*var(--fs)) 'DM Sans',sans-serif;cursor:pointer}
+    .fs-ctrl button:disabled{opacity:.4;cursor:default}
+    #fs-val{min-width:44px;text-align:center;font-weight:700}
+    .sw{min-width:64px;padding:0 10px}
+    .sw[aria-checked="true"]{background:var(--accent);border-color:var(--accent);color:#000}
+    .a11y-reset{margin-top:10px;width:100%;min-height:36px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-2);font:600 calc(12px*var(--fs)) 'DM Sans',sans-serif;cursor:pointer}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+    /* ── LAYOUT ── */
+    /* Sidebar (standings above, map below) + team detail as the main area */
+    #body{--left-w:400px;flex:1;display:grid;grid-template-columns:var(--left-w) 7px minmax(0,1fr);min-height:0}
+    /* The sidebar scrolls as a whole: full standings, then the map, which grows with the sidebar width */
+    #sidebar{display:flex;flex-direction:column;min-height:0;min-width:0;overflow-y:auto;background:var(--bg-left)}
+    #standings{background:var(--bg-left);display:flex;flex-direction:column;flex:0 0 auto;min-width:0}
+    #map-area{background:var(--bg-center);position:relative;display:flex;flex-direction:column;flex:0 0 auto;height:calc(var(--left-w)*.85 + 110px);border-top:1px solid var(--border)}
+    #panel{background:var(--bg-right);overflow-y:auto;min-height:0;min-width:0;container-type:inline-size}
+    /* A wide panel shows the team cards in two columns */
+    @container (min-width:640px){ .team-list{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start} .team-list .team-card{margin-bottom:0} .team-list .empty,.team-list .team-card:only-child{grid-column:1/-1} }
+
+    /* ── RESIZABLE COLUMNS ── */
+    .splitter{position:relative;cursor:col-resize;background:var(--bg-center);touch-action:none;outline:none;z-index:5}
+    .splitter::before{content:'';position:absolute;top:0;bottom:0;left:3px;width:1px;background:var(--border);transition:background .15s,width .15s,left .15s}
+    .splitter::after{content:'⋮';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:13px;height:34px;border-radius:7px;background:var(--bg-card);border:1px solid var(--border);color:var(--text-3);font-size:calc(13px*var(--fs));line-height:32px;text-align:center;box-shadow:var(--shadow);opacity:0;transition:opacity .15s}
+    .splitter:hover::before,.splitter:focus-visible::before,.splitter.dragging::before{background:var(--accent);left:2px;width:3px}
+    .splitter:hover::after,.splitter:focus-visible::after,.splitter.dragging::after{opacity:1}
+    body.resizing{cursor:col-resize;user-select:none}
+    body.resizing #map-svg{pointer-events:none}
+
+    /* ── STANDINGS ── */
+    #group-tabs{display:flex;flex-wrap:wrap;gap:5px;padding:10px;background:var(--bg-left-tab);border-bottom:1px solid var(--border)}
+    .g-tab{flex:1 0 auto;min-width:calc(38px*var(--fs));min-height:32px;text-align:center;padding:6px 0;border-radius:6px;font-size:calc(12px*var(--fs));font-weight:700;cursor:pointer;color:var(--text-2);border:1px solid var(--border);background:var(--bg-card);transition:all .15s}
+    .g-tab:hover{border-color:var(--gc)}
+    .g-tab.active{background:var(--gc);border-color:var(--gc);color:var(--gt,#fff)}
+    body.hc .g-tab.active{outline:2px solid #fff;outline-offset:1px}
+    #data-note{font-size:calc(11px*var(--fs));color:var(--text-3);padding:6px 10px;border-bottom:1px solid var(--border);background:var(--bg-left-tab)}
+    #standings-scroll{flex:1;overflow-y:auto}
+    @media (min-width:769px){ #standings-scroll{overflow:visible} }
+    .grp-label{display:flex;align-items:center;gap:6px;font-size:calc(11px*var(--fs));font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:10px 10px 6px}
+    .grp-dot{width:9px;height:9px;border-radius:50%}
+    .s-head,.s-row{display:grid;grid-template-columns:calc(22px*var(--fs)) calc(26px*var(--fs)) minmax(0,1fr) calc(24px*var(--fs)) calc(24px*var(--fs)) calc(24px*var(--fs)) calc(36px*var(--fs)) calc(36px*var(--fs)) calc(32px*var(--fs));align-items:center;gap:4px;padding:0 10px}
+    .s-head{font-size:calc(11px*var(--fs));font-weight:700;color:var(--text-2);background:var(--bg-left-head);padding-top:5px;padding-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
+    .s-head span:nth-child(n+4),.s-row span:nth-child(n+4){text-align:right}
+    /* Compact (narrow column or big text): drop PF / PC so team names keep room */
+    #standings.compact .s-head,#standings.compact .s-row{grid-template-columns:calc(22px*var(--fs)) calc(26px*var(--fs)) minmax(0,1fr) calc(24px*var(--fs)) calc(24px*var(--fs)) calc(24px*var(--fs)) calc(32px*var(--fs))}
+    #standings.compact .s-head span:nth-child(7),#standings.compact .s-head span:nth-child(8),
+    #standings.compact .s-row span:nth-child(7),#standings.compact .s-row span:nth-child(8){display:none}
+    .s-row{font-size:calc(12px*var(--fs));padding-top:6px;padding-bottom:6px;border-bottom:1px solid var(--border-sub);cursor:pointer;background:var(--bg-card);font-variant-numeric:tabular-nums}
+    .s-row:hover{background:var(--row-hover)}
+    .s-row.highlighted{background:var(--accent-bg);box-shadow:inset 3px 0 0 var(--accent)}
+    .s-rank{font-weight:700;color:var(--text-3);text-align:center}
+    .s-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+    .s-pts{font-weight:700;color:var(--accent)}
+    .badge{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;font-weight:700;flex-shrink:0;letter-spacing:-.02em}
+    /* Club crest over the initials (which stay visible if the image fails) */
+    .badge img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12);opacity:0}
+    .badge img.ok{opacity:1}
+
+    /* ── MAP ── */
+    #map-wrap{flex:1;min-height:0;position:relative}
+    #map-svg{width:100%;height:100%;display:block;cursor:grab}
+    #map-svg:active{cursor:grabbing}
+    .muni{stroke:var(--map-border);stroke-width:.4;vector-effect:non-scaling-stroke;transition:fill .15s}
+    .prov{fill:none;stroke:var(--map-prov);stroke-width:1.1;vector-effect:non-scaling-stroke;pointer-events:none}
+    .dot{cursor:pointer}
+    .dot text{font-weight:700;fill:#fff;pointer-events:none;font-family:'DM Sans',sans-serif}
+    #map-tools{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px 0}
+    #map-tools button{flex:1 1 auto}
+    #map-tools button{min-height:32px;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-2);font-size:calc(12px*var(--fs));font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:var(--shadow)}
+    #map-tools button:hover{border-color:var(--accent);color:var(--accent)}
+    #map-hint{text-align:center;font-size:calc(13px*var(--fs));color:var(--text-3);padding:4px 8px 8px}
+    #legend{display:flex;flex-wrap:wrap;gap:6px 10px;margin:0 10px;font-size:calc(11px*var(--fs));color:var(--text-2);background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:6px 9px;box-shadow:var(--shadow)}
+    #legend span{display:flex;align-items:center;gap:4px;cursor:pointer}
+    #tooltip{position:fixed;pointer-events:none;z-index:50;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:9px 11px;box-shadow:0 8px 24px rgba(0,0,0,.18);font-size:calc(12px*var(--fs));min-width:170px;max-width:260px;opacity:0;transform:translate(14px,14px);transition:opacity .12s}
+    #tooltip.visible{opacity:1}
+    .tt-town{font-family:'Bebas Neue',sans-serif;font-size:calc(18px*var(--fs));letter-spacing:.5px}
+    .tt-team{display:flex;align-items:center;gap:6px;margin-top:5px}
+    .tt-empty{color:var(--text-3);margin-top:3px}
+
+    /* ── PANEL ── */
+    .p-pad{padding:14px}
+    .sec{font-size:calc(11px*var(--fs));font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);margin:14px 0 7px}
+    .sec:first-child{margin-top:0}
+    .card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow)}
+    .e-card{display:flex;align-items:center;gap:8px;padding:7px 9px;margin-bottom:5px;cursor:pointer;font-size:calc(12px*var(--fs))}
+    .e-card:hover{border-color:var(--accent)}
+    .e-main{flex:1;min-width:0}
+    .e-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .e-sub{font-size:calc(11px*var(--fs));color:var(--text-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .e-stat{font-family:'Bebas Neue',sans-serif;font-size:calc(18px*var(--fs));color:var(--accent)}
+    #panel-head{padding:14px 14px 4px}
+    #panel-town{font-weight:400;font-family:'Bebas Neue',sans-serif;font-size:calc(26px*var(--fs));letter-spacing:1px;line-height:1}
+    #panel-count{font-size:calc(12px*var(--fs));color:var(--text-3);margin-top:2px}
+    .team-card{margin-bottom:12px;overflow:hidden;animation:slideIn .3s ease both}
+    .tc-top{display:flex;gap:10px;align-items:center;padding:12px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.55)}
+    .tc-name{font-weight:700;font-size:calc(13px*var(--fs));line-height:1.2}
+    .tc-club{font-size:calc(11px*var(--fs));margin-top:2px}
+    .tc-pills{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap}
+    .tc-pill{font-size:calc(11px*var(--fs));font-weight:600;padding:2px 8px;border-radius:10px;background:rgba(0,0,0,.35)}
+    .tc-stats{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--border-sub)}
+    .tc-stats div{text-align:center;padding:8px 2px}
+    .tc-stats b{display:block;font-family:'Bebas Neue',sans-serif;font-size:calc(20px*var(--fs));color:var(--accent);line-height:1}
+    .tc-stats small{font-size:calc(11px*var(--fs));color:var(--text-3);font-weight:600;letter-spacing:.05em}
+    .tc-body{padding:4px 12px 12px}
+    .venue{font-size:calc(12px*var(--fs));line-height:1.5;color:var(--text-2)}
+    .venue b{color:var(--text);font-weight:600}
+    .g-row{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--border-sub);font-size:calc(12px*var(--fs))}
+    .g-row:last-child{border-bottom:none}
+    .g-res{width:calc(18px*var(--fs));height:calc(18px*var(--fs));border-radius:4px;font-size:calc(11px*var(--fs));font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .g-opp{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .g-score{font-family:'Bebas Neue',sans-serif;font-size:calc(15px*var(--fs));white-space:nowrap}
+    .g-date{font-size:calc(11px*var(--fs));color:var(--text-3);white-space:nowrap}
+    .empty{text-align:center;padding:30px 10px;color:var(--text-3);font-size:calc(13px*var(--fs))}
+    /* Team view */
+    .tv-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+    .tv-crumb{font-size:calc(12px*var(--fs));font-weight:600;color:var(--text-3);letter-spacing:.04em}
+    .tv-nav{display:flex;gap:6px;flex-wrap:wrap}
+    .tv-card{margin-bottom:4px}
+    .tv-card .tc-top{padding:16px 56px 16px 16px;gap:14px}
+    .tv-name{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:calc(30px*var(--fs));letter-spacing:.5px;line-height:1.05}
+    .tv-card .tc-club{font-size:calc(13px*var(--fs))}
+    .tv-stats{grid-template-columns:repeat(6,1fr)}
+    .tv-stats b{font-size:calc(24px*var(--fs))}
+    .tv-box{padding:6px 12px}
+    .tv-box .sec:first-child{margin-top:8px}
+    .tv-box.venue{padding:10px 12px}
+    .tv-grid{display:block}
+    @container (min-width:760px){ .tv-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start} }
+    @container (max-width:520px){ .tv-stats{grid-template-columns:repeat(3,1fr)} }
+    .g-opp.link{cursor:pointer}
+    .g-opp.link:hover{color:var(--accent);text-decoration:underline}
+    .nx-card{padding:12px}
+    .nx-when{font-size:calc(12px*var(--fs));color:var(--text-2);text-align:center}
+    .nx-when b{color:var(--accent);text-transform:uppercase;letter-spacing:.05em}
+    .nx-teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin:10px 0}
+    .nx-team{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;font-size:calc(12px*var(--fs));font-weight:600;min-width:0}
+    .nx-team.me{color:var(--accent)}
+    .nx-vs{font-family:'Bebas Neue',sans-serif;font-size:calc(22px*var(--fs));color:var(--text-3)}
+    .nx-venue{font-size:calc(12px*var(--fs));color:var(--text-2);text-align:center;line-height:1.5}
+    .nx-venue a{color:var(--accent);font-weight:600}
+    .form-chart{display:block;width:100%;height:auto;max-height:calc(110px*var(--fs));margin-top:6px}
+    .form-chart line{stroke:var(--border);stroke-width:1}
+    .form-chart text{font-size:calc(10px*var(--fs));font-weight:700;fill:var(--text-2);font-family:'DM Sans',sans-serif}
+    .facts{list-style:none;margin:6px 0 4px;font-size:calc(12px*var(--fs));color:var(--text-2);line-height:1.7}
+    .facts li::before{content:'▸ ';color:var(--accent)}
+    .town-team{padding:10px 12px}
+    .grp-tag{display:inline-flex;align-items:center;gap:4px;font-weight:700;color:var(--text-2)}
+    .town-team .e-name{font-size:calc(13px*var(--fs))}
+    @keyframes slideIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+
+    /* ── MOBILE ── */
+    #bottom-nav{display:none}
+    @media (max-width:768px){
+      #header{padding:8px 12px}
+      #title{font-size:calc(16px*var(--fs));letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      #title .t-long{display:none}
+      #header .pill-btn{padding:5px 8px}
+      #subtitle,#theme-toggle .lbl,#a11y-btn .lbl{display:none}
+      #header{flex-wrap:wrap;row-gap:6px}
+      #search-wrap{order:3;flex-basis:100%;max-width:none;margin:0}
+      #search-key{display:none}
+      #toast{bottom:76px}
+      #body{display:block;position:relative}
+      #sidebar{display:contents}
+      #standings,#map-area,#panel{position:absolute;inset:0;display:none;border:none;height:auto;min-height:0}
+      .splitter{display:none}
+      #standings.m-active,#map-area.m-active{display:flex}
+      #panel.m-active{display:block}
+      #bottom-nav{display:flex;border-top:1px solid var(--border);background:var(--bg-header);flex-shrink:0}
+      .nav-tab{flex:1;padding:8px 0 10px;border:none;background:none;color:var(--text-3);font-family:'DM Sans',sans-serif;font-size:calc(11px*var(--fs));font-weight:600;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;position:relative}
+      .nav-tab.active{color:var(--accent)}
+      .nav-tab .ico{font-size:calc(18px*var(--fs))}
+      #tooltip{display:none}
+    }
+  </style>
+</head>
+<body>
+<a class="skip-link" href="#standings-scroll">Saltar a la clasificación</a>
+
+<div id="header">
+  <div style="display:flex;align-items:center;gap:11px;min-width:0">
+    <span style="font-size:calc(24px*var(--fs))">🏀</span>
+    <div style="min-width:0">
+      <h1 id="title" class="bebas">CADET INTERTERRITORIAL<span class="t-long"> · CATALUNYA</span></h1>
+      <div id="subtitle">Federació Catalana de Basquetbol · Temporada <span id="season"></span></div>
+    </div>
+  </div>
+  <div id="search-wrap">
+    <input id="search" type="search" autocomplete="off" spellcheck="false" placeholder="Buscar equipo, club, municipio o pabellón…"
+      role="combobox" aria-expanded="false" aria-controls="search-results" aria-autocomplete="list" aria-label="Buscar">
+    <kbd id="search-key">/</kbd>
+    <div id="search-results" role="listbox"></div>
+  </div>
+  <div class="hdr-right">
+    <button id="gender-toggle" class="pill-btn" onclick="toggleGender()" title="Cambiar entre masculino y femenino">
+      <span class="opt active" id="opt-M">MASC</span>
+      <div class="toggle-track"><div class="toggle-thumb"></div></div>
+      <span class="opt" id="opt-F">FEM</span>
+    </button>
+    <button id="theme-toggle" class="pill-btn" onclick="toggleTheme()" aria-pressed="false"><span id="theme-icon" aria-hidden="true">🌙</span><span class="lbl" id="theme-label">Oscuro</span></button>
+    <div id="a11y-wrap">
+      <button id="a11y-btn" class="pill-btn" onclick="toggleA11yMenu()" aria-haspopup="true" aria-expanded="false" aria-controls="a11y-menu" title="Accesibilidad: tamaño de letra, contraste y animaciones">
+        <span aria-hidden="true" style="font-weight:700">Aa</span><span class="lbl">Accesibilidad</span>
+      </button>
+      <div id="a11y-menu" role="dialog" aria-label="Opciones de accesibilidad">
+        <h2>Accesibilidad</h2>
+        <div class="a11y-row"><div>Tamaño de letra<small>También funciona el zoom del navegador (Ctrl +)</small></div>
+          <div class="fs-ctrl"><button onclick="stepFont(-1)" aria-label="Reducir letra">A−</button><span id="fs-val" aria-live="polite">100%</span><button onclick="stepFont(1)" aria-label="Aumentar letra">A+</button></div></div>
+        <div class="a11y-row"><div>Alto contraste<small>Fondo negro, texto blanco y amarillo</small></div>
+          <button class="sw" id="sw-hc" role="switch" aria-checked="false" onclick="setA11y({ hc: !A11Y.hc })">No</button></div>
+        <div class="a11y-row"><div>Reducir animaciones<small>Sin transiciones ni zoom animado</small></div>
+          <button class="sw" id="sw-motion" role="switch" aria-checked="false" onclick="setA11y({ motion: !A11Y.motion })">No</button></div>
+        <button class="a11y-reset" onclick="resetA11y()">Restablecer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="body">
+  <div id="sidebar">
+  <div id="standings" class="m-active">
+    <div id="group-tabs"></div>
+    <div id="data-note"></div>
+    <div id="standings-scroll"></div>
+  </div>
+
+  <div id="map-area">
+    <div id="map-tools">
+      <button onclick="zoomTo('bcn')">🔍 Àrea de Barcelona</button>
+      <button onclick="zoomTo('all')">↺ Catalunya</button>
+    </div>
+    <div id="map-wrap">
+      <svg id="map-svg" role="group" aria-label="Mapa de Catalunya con los municipios que tienen equipo. Los puntos se pueden recorrer con el tabulador; también puedes usar el buscador o la clasificación."></svg>
+    </div>
+    <div id="legend"></div>
+    <div id="map-hint" aria-live="polite">Haz clic en un municipio o en un punto para ver sus equipos</div>
+  </div>
+  </div>
+
+  <div class="splitter" id="split-left" data-side="left" role="separator" aria-orientation="vertical" aria-controls="sidebar" aria-label="Ancho de la clasificación y el mapa" tabindex="0" title="Arrastra para cambiar el ancho · doble clic para restablecer"></div>
+
+  <div id="panel"></div>
+</div>
+
+<nav id="bottom-nav">
+  <button class="nav-tab active" data-tab="standings" onclick="switchTab('standings')"><span class="ico">🏆</span>Clasificación</button>
+  <button class="nav-tab" data-tab="map-area" onclick="switchTab('map-area')"><span class="ico">🗺️</span>Mapa</button>
+  <button class="nav-tab" data-tab="panel" onclick="switchTab('panel')"><span class="ico">🏀</span>Equipo</button>
+</nav>
+
+<div id="tooltip"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// DATA (data/cadet-data.js, extracted from basquetcatala.cat)
+// ═══════════════════════════════════════════════════════════════
+const DATA = window.FCBQ_DATA;
+const TEAMS = DATA.teams;
+const GROUP_COLORS = ['#e4572e','#2e86ab','#e9a23b','#6a4c93','#17a398','#c33c54','#7cb518','#1982c4'];
+const CAT_PROVINCES = ['08','17','25','43'];
+const ANDORRA = [1.5218, 42.5063];
+const DAYS_ES = { Dilluns:'Lunes', Dimarts:'Martes', Dimecres:'Miércoles', Dijous:'Jueves', Divendres:'Viernes', Dissabte:'Sábado', Diumenge:'Domingo' };
+
+let gender = 'M';
+let currentGroup = null;   // gid of the group shown in the standings
+let selectedMuni = null;   // INE code, or 'AND' for Andorra
+let focusTeam = null;      // team id highlighted in standings / panel
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const groupsOf = g => DATA.groups.filter(x => x.gender === g);
+const groupOfTeam = tid => DATA.groups.find(g => g.standings.some(s => s.id === tid));
+const groupColor = gid => { const gs = groupsOf(DATA.groups.find(g => g.gid === gid).gender); return GROUP_COLORS[gs.findIndex(g => g.gid === gid) % GROUP_COLORS.length]; };
+const groupNum = gid => DATA.groups.find(g => g.gid === gid).name.replace(/^Grup\s*/, '');
+const muniOf = tid => TEAMS[tid].muni || (TEAMS[tid].prov === 'Andorra' ? 'AND' : '');
+const teamsOfGender = g => Object.keys(TEAMS).filter(id => TEAMS[id].gender === g);
+const teamsInMuni = (m, g = gender) => teamsOfGender(g).filter(id => muniOf(id) === m);
+
+// "12-09-2026 12:00" → Date
+function parseDate(s) {
+  const m = /^(\d\d)-(\d\d)-(\d{4})(?: (\d\d):(\d\d))?/.exec(s || '');
+  return m ? new Date(+m[3], +m[2] - 1, +m[1], +(m[4] || 0), +(m[5] || 0)) : null;
+}
+const fmtDate = d => d ? d.toLocaleDateString('es-ES', { weekday:'short', day:'numeric', month:'short' }).replace('.', '') : 'Sin fecha';
+const fmtTime = d => d ? d.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' }) : '';
+
+// Club crest from the Federació's CDN (150 px version); the initials badge is the fallback
+const LOGO_BASE = 'https://d3ah0nqesr6vwc.cloudfront.net/recursos/imatges/multimedia/';
+// Initials badge: club name words without generic prefixes, colour from club id
+const STOP = new Set(['CB','C.B.','C.B','CLUB','BASQUET','BÀSQUET','BC','CE','C.E.','UE','U.E.','AE','A.E.','CN','CEB','CCE','FC','AB','SANT','DE','DEL','LA','EL','I','A','B','1','2']);
+function initials(name) {
+  const words = name.split(/[\s.\-–]+/).filter(w => /[A-ZÀ-Ü]/i.test(w) && w.length > 1 && !STOP.has(w.toUpperCase()));
+  return ((words[0] || name)[0] + ((words[1] || '')[0] || (words[0] || '')[1] || '')).toUpperCase();
+}
+function clubColor(tid) {
+  const k = +(TEAMS[tid].clubId || tid);
+  return `hsl(${(k * 47) % 360},55%,40%)`;
+}
+const badge = (tid, size = 22) => { const px = Math.round(size * FS); return `<span class="badge" aria-hidden="true" style="width:${px}px;height:${px}px;font-size:${Math.round(px * .4)}px;background:${clubColor(tid)}">${esc(initials(TEAMS[tid].name))}${TEAMS[tid].logo ? `<img src="${LOGO_BASE}${encodeURIComponent(TEAMS[tid].logo)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onload="this.classList.add('ok')" onerror="this.remove()">` : ''}</span>`; };
+
+function standingOf(tid) {
+  const g = groupOfTeam(tid);
+  const i = g.standings.findIndex(s => s.id === tid);
+  return { ...g.standings[i], pos: i + 1, of: g.standings.length, gid: g.gid };
+}
+function matchesOf(tid) {
+  return groupOfTeam(tid).matches.filter(m => m.h === tid || m.a === tid)
+    .map(m => ({ ...m, date: parseDate(m.dt) }))
+    .sort((a, b) => (a.date || Infinity) - (b.date || Infinity));
+}
+const played = m => m.hs !== null && m.hs !== undefined;
+const today = () => new Date(new Date().toDateString());
+const pending = tid => matchesOf(tid).filter(m => !played(m) && (!m.date || m.date >= today()));
+// Accent- and case-insensitive text for search
+const norm = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+// ── Favourites ("Mis equipos"), kept in this browser ──
+const FAV_KEY = 'cadet.favorites';
+let favorites = (() => { try { return (JSON.parse(localStorage.getItem(FAV_KEY)) || []).filter(id => TEAMS[id]); } catch (e) { return []; } })();
+const isFav = tid => favorites.includes(tid);
+function toggleFav(tid, ev) {
+  ev?.stopPropagation();
+  favorites = isFav(tid) ? favorites.filter(x => x !== tid) : [...favorites, tid];
+  try { localStorage.setItem(FAV_KEY, JSON.stringify(favorites)); } catch (e) {}
+  // Update the stars in place so the panel keeps its scroll position
+  document.querySelectorAll(`.fav-btn[data-tid="${tid}"]`).forEach(b => {
+    b.classList.toggle('on', isFav(tid));
+    b.textContent = isFav(tid) ? '★' : '☆';
+    b.setAttribute('aria-pressed', isFav(tid));
+  });
+  buildStandings();
+  if (!selectedMuni) buildPanel();
+  toast(isFav(tid) ? '⭐ Añadido a Mis equipos' : 'Quitado de Mis equipos');
+}
+
+let toastTimer;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// THEME / MOBILE TABS
+// ═══════════════════════════════════════════════════════════════
+let isDark = false;
+const toggleTheme = () => setA11y({ dark: !isDark });
+
+// ═══════════════════════════════════════════════════════════════
+// ACCESSIBILITY (text size, high contrast, reduced motion, theme)
+// ═══════════════════════════════════════════════════════════════
+const FS_STEPS = [1, 1.15, 1.3, 1.5];
+const A11Y_KEY = 'cadet.a11y';
+const media = q => window.matchMedia?.(q).matches || false;
+// First visit: follow the system settings
+const A11Y_DEFAULT = () => ({ fs: 1, hc: media('(prefers-contrast: more)'), motion: media('(prefers-reduced-motion: reduce)'), dark: media('(prefers-color-scheme: dark)') });
+const A11Y = { ...A11Y_DEFAULT(), ...(() => { try { return JSON.parse(localStorage.getItem(A11Y_KEY)) || {}; } catch (e) { return {}; } })() };
+let FS = 1, a11yApplied = false;
+const motionMs = ms => A11Y.motion ? 0 : ms;
+
+function setA11y(changes) {
+  Object.assign(A11Y, changes);
+  try { localStorage.setItem(A11Y_KEY, JSON.stringify(A11Y)); } catch (e) {}
+  applyA11y();
+}
+function resetA11y() {
+  try { localStorage.removeItem(A11Y_KEY); } catch (e) {}
+  Object.assign(A11Y, A11Y_DEFAULT());
+  applyA11y();
+}
+function stepFont(dir) {
+  const i = FS_STEPS.indexOf(A11Y.fs);
+  setA11y({ fs: FS_STEPS[Math.min(FS_STEPS.length - 1, Math.max(0, (i < 0 ? 0 : i) + dir))] });
+}
+
+function applyA11y() {
+  const prevFS = FS;
+  FS = FS_STEPS.includes(A11Y.fs) ? A11Y.fs : 1;
+  isDark = !!A11Y.dark;
+  document.documentElement.style.setProperty('--fs', FS);
+  updateCompact();
+  document.body.classList.toggle('dark', isDark);
+  document.body.classList.toggle('hc', !!A11Y.hc);
+  document.body.classList.toggle('reduce-motion', !!A11Y.motion);
+  document.getElementById('theme-icon').textContent = isDark ? '☀️' : '🌙';
+  document.getElementById('theme-label').textContent = isDark ? 'Claro' : 'Oscuro';
+  document.getElementById('theme-toggle').setAttribute('aria-pressed', isDark);
+  document.getElementById('fs-val').textContent = Math.round(FS * 100) + '%';
+  const [dec, inc] = document.querySelectorAll('.fs-ctrl button');
+  dec.disabled = FS === FS_STEPS[0]; inc.disabled = FS === FS_STEPS[FS_STEPS.length - 1];
+  for (const [id, on] of [['sw-hc', A11Y.hc], ['sw-motion', A11Y.motion]]) {
+    const b = document.getElementById(id);
+    b.setAttribute('aria-checked', !!on);
+    b.textContent = on ? 'Sí' : 'No';
+  }
+  // Wider text needs wider side columns (only on a change: saved widths already include it)
+  if (a11yApplied && prevFS !== FS) {
+    widths.left *= FS / prevFS;
+    if (!isMobile()) applyWidths();
+  }
+  // Re-render what has sizes computed in JS (badges, map dots)
+  if (currentGroup) { buildGroupTabs(); buildStandings(); buildPanel(); }
+  refreshMap();
+  a11yApplied = true;
+}
+
+// Compact standings when the fixed columns would leave the team name < 110px
+function updateCompact() {
+  const st = document.getElementById('standings');
+  const fixed = (22 + 26 + 24 * 3 + 36 * 2 + 32) * FS + 8 * 4 + 20;
+  st.classList.toggle('compact', st.clientWidth > 0 && st.clientWidth - fixed < 110 * FS);
+}
+
+function toggleA11yMenu(force) {
+  const menu = document.getElementById('a11y-menu'), btn = document.getElementById('a11y-btn');
+  const open = force ?? !menu.classList.contains('open');
+  menu.classList.toggle('open', open);
+  btn.setAttribute('aria-expanded', open);
+  if (open) menu.querySelector('button').focus();
+}
+document.addEventListener('click', e => { if (!e.target.closest('#a11y-wrap')) toggleA11yMenu(false); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('a11y-menu').classList.contains('open')) { toggleA11yMenu(false); document.getElementById('a11y-btn').focus(); }
+  // Elements with role="button" that aren't real buttons: Enter / Space activate them
+  const t = e.target;
+  if ((e.key === 'Enter' || e.key === ' ') && t.getAttribute?.('role') === 'button' && !/^(BUTTON|A|INPUT|SELECT|TEXTAREA)$/.test(t.tagName) && !t.closest('svg')) {
+    e.preventDefault(); t.click();
+  }
+});
+
+// Black or white text, whichever contrasts more with a hex background
+function textOn(hex) {
+  const c = hex.replace('#', '').match(/../g).map(x => parseInt(x, 16) / 255).map(v => v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4);
+  const L = .2126 * c[0] + .7152 * c[1] + .0722 * c[2];
+  return (L + .05) / .05 > 1.05 / (L + .05) ? '#000' : '#fff';
+}
+const isMobile = () => window.innerWidth <= 768;
+function switchTab(id) {
+  ['standings', 'map-area', 'panel'].forEach(x => document.getElementById(x).classList.toggle('m-active', x === id));
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STANDINGS
+// ═══════════════════════════════════════════════════════════════
+function buildGroupTabs() {
+  document.getElementById('group-tabs').innerHTML = groupsOf(gender).map(g =>
+    `<div class="g-tab${g.gid === currentGroup ? ' active' : ''}" style="--gc:${groupColor(g.gid)};--gt:${textOn(groupColor(g.gid))}" onclick="showGroup(${g.gid})"
+      role="button" tabindex="0" aria-pressed="${g.gid === currentGroup}" aria-label="Grupo ${groupNum(g.gid)}">${groupNum(g.gid)}</div>`).join('');
+}
+
+function showGroup(gid) {
+  currentGroup = gid;
+  buildGroupTabs();
+  buildStandings();
+  refreshMap();
+  syncURL(false);
+}
+
+function buildStandings() {
+  const g = DATA.groups.find(x => x.gid === currentGroup);
+  const rows = g.standings.map((s, i) => {
+    const t = TEAMS[s.id];
+    return `<div class="s-row${s.id === focusTeam ? ' highlighted' : ''}" data-tid="${s.id}" onclick="selectTeam('${s.id}')" title="${esc(t.name)} · ${esc(t.town)}"
+      role="button" tabindex="0" aria-label="${i + 1}º ${esc(t.name)}, ${esc(t.town)}: ${s.w} ganados, ${s.l} perdidos, ${s.pts} puntos${isFav(s.id) ? ', mi equipo' : ''}">
+      <span class="s-rank">${i + 1}</span>${badge(s.id)}
+      <span class="s-name">${isFav(s.id) ? '<span class="s-fav" title="Mi equipo">★</span>' : ''}${esc(t.name)}</span>
+      <span>${s.j}</span><span>${s.w}</span><span>${s.l}</span><span>${s.pf}</span><span>${s.pa}</span><span class="s-pts">${s.pts}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('standings-scroll').innerHTML = `
+    <div class="grp-label"><span class="grp-dot" style="background:${groupColor(g.gid)}"></span>${esc(g.name)} · ${gender === 'M' ? 'Masculí' : 'Femení'}</div>
+    <div class="s-head"><span>#</span><span></span><span>Equipo</span><span title="Jugados">J</span><span title="Ganados">G</span><span title="Perdidos">P</span><span title="Puntos a favor">PF</span><span title="Puntos en contra">PC</span><span title="Puntos de clasificación">Pts</span></div>
+    ${rows}`;
+  const hl = document.querySelector('#standings-scroll .highlighted');
+  if (hl) hl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MAP (es-atlas municipalities, Catalonia only)
+// ═══════════════════════════════════════════════════════════════
+const MAP = {};
+const W = 800, H = 720;
+
+function initMap(topo) {
+  const all = topojson.feature(topo, topo.objects.municipalities).features;
+  MAP.features = all.filter(f => CAT_PROVINCES.includes(String(f.id).slice(0, 2)));
+  MAP.byId = Object.fromEntries(MAP.features.map(f => [f.id, f]));
+  MAP.proj = d3.geoMercator().fitExtent([[16, 16], [W - 16, H - 16]], { type: 'FeatureCollection', features: MAP.features });
+  MAP.path = d3.geoPath(MAP.proj);
+  const provs = { type: 'GeometryCollection', geometries: topo.objects.provinces.geometries.filter(g => CAT_PROVINCES.includes(String(g.id))) };
+
+  const svg = d3.select('#map-svg').attr('viewBox', `0 0 ${W} ${H}`).attr('preserveAspectRatio', 'xMidYMid meet');
+  MAP.svg = svg;
+  MAP.g = svg.append('g');
+  MAP.g.append('g').selectAll('path').data(MAP.features).join('path')
+    .attr('class', 'muni').attr('d', MAP.path)
+    .on('mouseover', (e, f) => { hover(f.id, true); showTooltip(e, f.id); })
+    .on('mousemove', moveTooltip)
+    .on('mouseout', (e, f) => { hover(f.id, false); hideTooltip(); })
+    .on('click', (e, f) => selectMuni(f.id));
+  MAP.g.append('path').datum(topojson.mesh(topo, provs)).attr('class', 'prov').attr('d', MAP.path);
+  MAP.dots = MAP.g.append('g');
+
+  MAP.zoom = d3.zoom().scaleExtent([1, 40]).translateExtent([[0, 0], [W, H]])
+    .on('zoom', e => { MAP.k = e.transform.k; MAP.g.attr('transform', e.transform); scaleDots(); });
+  MAP.k = 1;
+  svg.call(MAP.zoom);
+  new ResizeObserver(() => scaleDots()).observe(svg.node());
+  refreshMap();
+}
+
+const muniName = m => m === 'AND' ? 'Andorra' : (MAP.byId?.[m]?.properties.name || TEAMS[teamsInMuni(m)[0]]?.town || '');
+const muniCentroid = m => m === 'AND' ? MAP.proj(ANDORRA) : MAP.path.centroid(MAP.byId[m]);
+
+function muniFill(id, hovering) {
+  if (id === selectedMuni) return '#ff8c00';
+  const has = teamsInMuni(id).length > 0;
+  return getComputedStyle(document.body).getPropertyValue(has ? (hovering ? '--map-team-h' : '--map-team') : (hovering ? '--map-empty-h' : '--map-empty')).trim();
+}
+function hover(id, on) {
+  MAP.g.selectAll('.muni').filter(f => f.id === id).attr('fill', muniFill(id, on));
+}
+
+function refreshMap() {
+  if (!MAP.g) return;
+  MAP.g.selectAll('.muni').attr('fill', f => muniFill(f.id, false));
+
+  // One dot per municipality with teams of the current gender
+  const munis = [...new Set(teamsOfGender(gender).map(muniOf).filter(Boolean))];
+  const data = munis.map(m => {
+    const ids = teamsInMuni(m);
+    const inGroup = ids.filter(id => TEAMS[id].group === currentGroup);
+    const groups = [...new Set(ids.map(id => TEAMS[id].group))];
+    return { m, ids, inGroup, xy: muniCentroid(m), color: inGroup.length ? groupColor(currentGroup) : groups.length === 1 ? groupColor(groups[0]) : '#888' };
+  }).filter(d => d.xy && !isNaN(d.xy[0]));
+  // Draw the current group's dots last, so they sit on top
+  data.sort((a, b) => a.inGroup.length - b.inGroup.length);
+
+  MAP.dots.selectAll('g.dot').data(data, d => d.m).join(
+    enter => {
+      const g = enter.append('g').attr('class', 'dot').attr('tabindex', 0).attr('role', 'button')
+        .on('mouseover', (e, d) => showTooltip(e, d.m)).on('mousemove', moveTooltip).on('mouseout', hideTooltip)
+        .on('click', (e, d) => { e.stopPropagation(); selectMuni(d.m); })
+        .on('keydown', (e, d) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectMuni(d.m); } });
+      g.append('circle').attr('class', 'halo');
+      g.append('circle').attr('class', 'core').attr('stroke', '#fff');
+      g.append('text').attr('text-anchor', 'middle').attr('dy', '.35em');
+      return g;
+    }
+  ).attr('transform', d => `translate(${d.xy[0]},${d.xy[1]})`)
+   .attr('opacity', d => d.inGroup.length || d.m === selectedMuni ? 1 : .45)
+   .each(function (d) {
+     const g = d3.select(this);
+     g.select('.halo').attr('fill', d.color).attr('opacity', d.inGroup.length ? .25 : 0);
+     g.select('.core').attr('fill', d.color);
+     g.select('text').text(d.ids.length > 1 ? d.ids.length : '');
+     g.attr('aria-label', `${muniName(d.m)}: ${d.ids.length} equipo${d.ids.length > 1 ? 's' : ''}`);
+   });
+  MAP.dots.selectAll('g.dot').sort((a, b) => a.inGroup.length - b.inGroup.length);
+  scaleDots();
+  buildLegend();
+}
+
+// Keep dots a constant on-screen size while zooming and whatever the map's size on screen
+function scaleDots() {
+  const k = MAP.k || 1;
+  const el = MAP.svg.node(), px = Math.min(el.clientWidth / W, el.clientHeight / H) || 1;
+  MAP.dots.selectAll('g.dot').each(function (d) {
+    const r = (d.ids.length > 1 ? 7 : 5) * FS / Math.sqrt(k) * (d.inGroup.length ? 1.15 : 1) / px;
+    const g = d3.select(this);
+    g.select('.core').attr('r', r).attr('stroke-width', 1.2 / Math.sqrt(k) / px);
+    g.select('.halo').attr('r', r * 2);
+    g.select('text').attr('font-size', r * 1.2);
+  });
+}
+
+function zoomTo(where) {
+  const t = where === 'bcn'
+    ? (() => { // Barcelona metropolitan area
+        const [[x0, y1], [x1, y0]] = [MAP.proj([1.88, 41.27]), MAP.proj([2.36, 41.62])].map(p => p);
+        const k = Math.min(W / (x1 - x0), H / (y1 - y0)) * .9;
+        return d3.zoomIdentity.translate(W / 2, H / 2).scale(k).translate(-(x0 + x1) / 2, -(y0 + y1) / 2);
+      })()
+    : d3.zoomIdentity;
+  MAP.svg.transition().duration(motionMs(750)).call(MAP.zoom.transform, t);
+}
+
+function buildLegend() {
+  document.getElementById('legend').innerHTML = groupsOf(gender).map(g =>
+    `<span onclick="showGroup(${g.gid})" role="button" tabindex="0" aria-label="Ver grupo ${groupNum(g.gid)}" style="${g.gid === currentGroup ? 'font-weight:700;color:var(--text);text-decoration:underline' : ''}"><span class="grp-dot" style="background:${groupColor(g.gid)}"></span>G${groupNum(g.gid)}</span>`).join('');
+}
+
+// ── Tooltip ──
+function showTooltip(e, m) {
+  if (isMobile()) return;
+  const ids = teamsInMuni(m);
+  const tt = document.getElementById('tooltip');
+  tt.innerHTML = `<div class="tt-town">${esc(muniName(m))}</div>` + (ids.length
+    ? ids.map(id => { const s = standingOf(id); return `<div class="tt-team">${badge(id, 18)}<span style="flex:1">${esc(TEAMS[id].name)}</span><span class="grp-tag"><span class="grp-dot" style="background:${groupColor(s.gid)}"></span>G${groupNum(s.gid)} · ${s.pos}º</span></div>`; }).join('')
+    : `<div class="tt-empty">Sin equipos cadetes ${gender === 'M' ? 'masculinos' : 'femeninos'}</div>`);
+  tt.classList.add('visible');
+  moveTooltip(e);
+}
+function moveTooltip(e) { const tt = document.getElementById('tooltip'); tt.style.left = e.clientX + 'px'; tt.style.top = e.clientY + 'px'; }
+function hideTooltip() { document.getElementById('tooltip').classList.remove('visible'); }
+
+// ═══════════════════════════════════════════════════════════════
+// SELECTION + PANEL
+// ═══════════════════════════════════════════════════════════════
+function selectMuni(m, tid = null) {
+  if (!tid && teamsInMuni(m).length === 1) return selectTeam(teamsInMuni(m)[0]);
+  selectedMuni = m;
+  focusTeam = tid;
+  const ids = teamsInMuni(m);
+  if (!tid && ids.some(id => TEAMS[id].group === currentGroup) === false && ids.length) {
+    // Show the group of the first team in this town so its standings are visible
+    currentGroup = TEAMS[ids[0]].group;
+    buildGroupTabs();
+  }
+  buildStandings();
+  refreshMap();
+  buildPanel();
+  document.getElementById('map-hint').textContent = `${muniName(m)} · ${ids.length ? ids.length + ' equipo' + (ids.length > 1 ? 's' : '') : 'sin equipos'}`;
+  if (isMobile()) switchTab('panel');
+  syncURL(true);
+}
+
+// opts.zoom: centre the map on the team's town (used by search)
+function selectTeam(tid, opts = {}) {
+  if (TEAMS[tid].gender !== gender) setGender(TEAMS[tid].gender, false);
+  currentGroup = TEAMS[tid].group;
+  buildGroupTabs();
+  selectMuni(muniOf(tid), tid);
+  if (opts.zoom) zoomToMuni(muniOf(tid));
+}
+
+function clearSelection() {
+  selectedMuni = null; focusTeam = null;
+  buildStandings(); refreshMap(); buildPanel();
+  document.getElementById('map-hint').textContent = 'Haz clic en un municipio o en un punto para ver sus equipos';
+  syncURL(true);
+}
+
+function zoomToMuni(m) {
+  if (!MAP.svg || !m) return;
+  const [x, y] = muniCentroid(m);
+  MAP.svg.transition().duration(motionMs(750))
+    .call(MAP.zoom.transform, d3.zoomIdentity.translate(W / 2, H / 2).scale(5).translate(-x, -y));
+}
+
+function buildPanel() {
+  const panel = document.getElementById('panel');
+  panel.innerHTML = focusTeam ? teamViewHTML(focusTeam) : selectedMuni ? townViewHTML(selectedMuni) : summaryHTML();
+  panel.scrollTop = 0;
+}
+
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+const genderAdj = () => gender === 'M' ? 'masculino' : 'femenino';
+
+// Town with several teams: one card per team, each opens its own view
+function townViewHTML(m) {
+  const ids = teamsInMuni(m).sort((a, b) => TEAMS[a].group - TEAMS[b].group);
+  return `
+    <div id="panel-head">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <h2 id="panel-town">${esc(muniName(m))}</h2>
+        <button class="pill-btn" onclick="clearSelection()">✕ Cerrar</button>
+      </div>
+      <div id="panel-count">${ids.length ? `${plural(ids.length, 'equipo', 'equipos')} cadete${ids.length > 1 ? 's' : ''} ${genderAdj()}${ids.length > 1 ? 's' : ''} · elige uno para ver su ficha` : `Sin equipos cadetes ${genderAdj()}s`}</div>
+    </div>
+    <div class="p-pad team-list">${ids.length ? ids.map(id => {
+      const s = standingOf(id), t = TEAMS[id];
+      return `<div class="card e-card town-team" onclick="selectTeam('${id}')" role="button" tabindex="0" aria-label="Ver ${esc(t.name)}">${badge(id, 40)}
+        <div class="e-main"><div class="e-name">${esc(t.name)}</div>
+        <div class="e-sub"><span class="grp-tag"><span class="grp-dot" style="background:${groupColor(s.gid)}"></span>Grup ${groupNum(s.gid)}</span> · ${s.pos}º de ${s.of} · ${s.w}-${s.l} · 🏟️ ${esc(t.venue)}</div></div>
+        <div style="text-align:right"><div class="e-stat">${s.pts}</div><div style="font-size:calc(11px*var(--fs));color:var(--text-3)">PTS</div></div></div>`;
+    }).join('') : `<div class="empty">🏟️<br><br>Ningún equipo de este municipio juega la Cadet Interterritorial ${gender === 'M' ? 'masculina' : 'femenina'}</div>`}</div>`;
+}
+
+// One match from `tid`'s point of view; the opponent opens its own view
+function matchRow(tid, m, isNext, cls = '') {
+  const home = m.h === tid, opp = home ? m.a : m.h;
+  const my = home ? m.hs : m.as, their = home ? m.as : m.hs;
+  const res = isNext ? '' : `<span class="g-res" style="background:${my > their ? 'var(--won)' : 'var(--lost)'}">${my > their ? 'V' : 'D'}</span>`;
+  return `<div class="g-row ${cls}">${res}<span style="color:var(--text-3);font-size:calc(11px*var(--fs));width:14px" title="${home ? 'En casa' : 'Fuera'}">${home ? 'vs' : '@'}</span>${badge(opp, 18)}
+    <span class="g-opp link" role="button" tabindex="0" onclick="selectTeam('${opp}')" title="Ver ${esc(TEAMS[opp].name)}">${esc(TEAMS[opp].name)}</span>
+    ${isNext ? `<span class="g-date">${fmtDate(m.date)}${m.date ? ' · ' + fmtTime(m.date) : ''}</span>` : `<span class="g-score">${my}-${their}</span><span class="g-date">${fmtDate(m.date)}</span>`}</div>`;
+}
+
+const outcome = (tid, m) => { const home = m.h === tid, my = home ? m.hs : m.as, their = home ? m.as : m.hs; return { home, my, their, won: my > their, diff: my - their }; };
+
+// Point difference of the last games as bars (won up, lost down)
+function formChart(tid, games) {
+  if (!games.length) return '';
+  const VW = 300, VH = 90, mid = VH / 2, n = games.length, slot = VW / n;
+  const max = Math.max(10, ...games.map(m => Math.abs(outcome(tid, m).diff)));
+  const bars = games.map((m, i) => {
+    const o = outcome(tid, m), h = Math.max(2, Math.abs(o.diff) / max * (mid - 12));
+    const x = i * slot + slot * .2, w = slot * .6, opp = TEAMS[o.home ? m.a : m.h].name;
+    return `<g><title>${fmtDate(m.date)} · ${o.home ? 'vs' : '@'} ${esc(opp)}: ${o.my}-${o.their}</title>
+      <rect x="${x}" y="${o.won ? mid - h : mid}" width="${w}" height="${h}" rx="2" style="fill:${o.won ? 'var(--won)' : 'var(--lost)'}"/>
+      <text x="${x + w / 2}" y="${o.won ? mid - h - 3 : mid + h + 10}" text-anchor="middle">${o.diff > 0 ? '+' : ''}${o.diff}</text></g>`;
+  }).join('');
+  const w = games.filter(m => outcome(tid, m).won).length;
+  return `<svg class="form-chart" viewBox="0 0 ${VW} ${VH}" role="img" aria-label="Diferencia de puntos en los últimos ${n} partidos: ${w} ganados y ${n - w} perdidos">
+    <line x1="0" x2="${VW}" y1="${mid}" y2="${mid}"/>${bars}</svg>`;
+}
+
+// Full view of one team: everything about it, nothing else
+function teamViewHTML(tid) {
+  const t = TEAMS[tid], s = standingOf(tid), g = groupOfTeam(tid), color = clubColor(tid);
+  const ms = matchesOf(tid), done = ms.filter(played), upcoming = pending(tid);
+  const next = upcoming.find(m => m.date) || upcoming[0];
+  const others = teamsInMuni(muniOf(tid)).filter(x => x !== tid);
+
+  // Streak, home / away and ranks within the group
+  let streak = 0;
+  for (const m of [...done].reverse()) { if (outcome(tid, m).won === outcome(tid, done[done.length - 1]).won) streak++; else break; }
+  const rec = home => { const x = done.filter(m => outcome(tid, m).home === home); const w = x.filter(m => outcome(tid, m).won).length; return `${w}-${x.length - w}`; };
+  const active = g.standings.filter(x => x.j);
+  const rank = (k, asc) => [...active].sort((a, b) => asc ? a[k] / a.j - b[k] / b.j : b[k] / b.j - a[k] / a.j).findIndex(x => x.id === tid) + 1;
+  const diff = s.pf - s.pa;
+  const lead = s.pos === 1 ? (g.standings[1] && s.pts > g.standings[1].pts ? `Líder, ${plural(s.pts - g.standings[1].pts, 'punto', 'puntos')} por delante del 2º` : 'Líder del grupo')
+                           : g.standings[0].pts === s.pts ? 'Empatado a puntos con el líder' : `A ${plural(g.standings[0].pts - s.pts, 'punto', 'puntos')} del líder`;
+  const facts = [
+    lead,
+    s.j ? `${rank('pf', false)}º mejor ataque y ${rank('pa', true)}ª mejor defensa del grupo` : '',
+    done.length ? `Racha: ${streak} ${outcome(tid, done[done.length - 1]).won ? (streak > 1 ? 'victorias' : 'victoria') : (streak > 1 ? 'derrotas' : 'derrota')} seguida${streak > 1 ? 's' : ''}` : '',
+    done.length ? `En casa ${rec(true)} · fuera ${rec(false)}` : '',
+  ].filter(Boolean);
+
+  let nextHTML = '';
+  if (next) {
+    const host = next.h, days = next.date ? Math.round((new Date(next.date.toDateString()) - today()) / 864e5) : null;
+    const when = days === null ? '' : days === 0 ? 'Hoy' : days === 1 ? 'Mañana' : `En ${days} días`;
+    const side = id => `<div class="nx-team${id === tid ? ' me' : ''}">${badge(id, 44)}<span>${esc(TEAMS[id].name)}</span></div>`;
+    nextHTML = `<div class="sec">Próximo partido</div>
+      <div class="card nx-card">
+        <div class="nx-when">${when ? `<b>${when}</b> · ` : ''}${fmtDate(next.date)}${next.date ? ' · ' + fmtTime(next.date) : ''}${next.st === 'ajornat' ? ' · aplazado' : ''}</div>
+        <div class="nx-teams">${side(next.h)}<span class="nx-vs">VS</span>${side(next.a)}</div>
+        <div class="nx-venue">🏟️ ${esc(TEAMS[host].venue)} · ${esc(TEAMS[host].town)} ${host === tid ? '(en casa)' : '(fuera)'}
+          · <a href="${directionsURL(host)}" target="_blank" rel="noopener">🧭 Cómo llegar</a></div>
+      </div>`;
+  }
+
+  return `
+    <div id="panel-head" class="tv-head">
+      <div class="tv-crumb">${esc(muniName(muniOf(tid)) || t.town)} · Grup ${groupNum(s.gid)} · ${gender === 'M' ? 'Masculí' : 'Femení'}</div>
+      <div class="tv-nav">
+        ${others.length ? `<button class="pill-btn" onclick="selectMuni('${muniOf(tid)}')" title="Ver todos los equipos de ${esc(t.town)}">← ${plural(others.length + 1, 'equipo', 'equipos')} en ${esc(t.town)}</button>` : ''}
+        <button class="pill-btn" onclick="clearSelection()">✕ Cerrar</button>
+      </div>
+    </div>
+    <div class="p-pad tv">
+      <div class="card team-card tv-card">
+        <div class="tc-top" style="background:linear-gradient(rgba(0,0,0,.3),rgba(0,0,0,.3)),linear-gradient(135deg,${color},${groupColor(s.gid)})">
+          ${badge(tid, 72)}
+          <div style="min-width:0">
+            <h2 id="panel-town" class="tv-name">${esc(t.name)}</h2>
+            <div class="tc-club">${esc(t.club)} · ${esc(t.town)}</div>
+            <div class="tc-pills"><span class="tc-pill">Grup ${groupNum(s.gid)}</span><span class="tc-pill">${s.pos}º de ${s.of}</span><span class="tc-pill">${s.j} jugados</span></div>
+          </div>
+          <button class="fav-btn${isFav(tid) ? ' on' : ''}" data-tid="${tid}" onclick="toggleFav('${tid}', event)" aria-pressed="${isFav(tid)}"
+            title="${isFav(tid) ? 'Quitar de Mis equipos' : 'Añadir a Mis equipos'}" aria-label="Mi equipo">${isFav(tid) ? '★' : '☆'}</button>
+        </div>
+        <div class="tc-stats tv-stats">
+          <div><b>${s.pos}º</b><small>POSICIÓN</small></div>
+          <div><b>${s.w}-${s.l}</b><small>G-P</small></div>
+          <div><b>${s.pts}</b><small>PUNTOS</small></div>
+          <div><b>${s.j ? (s.pf / s.j).toFixed(1) : '–'}</b><small>PF/PART.</small></div>
+          <div><b>${s.j ? (s.pa / s.j).toFixed(1) : '–'}</b><small>PC/PART.</small></div>
+          <div><b style="color:${diff >= 0 ? 'var(--won-text)' : 'var(--lost-text)'}">${diff > 0 ? '+' : ''}${diff}</b><small>DIFERENCIA</small></div>
+        </div>
+        <div class="tc-actions">
+          <a class="act" href="${directionsURL(tid)}" target="_blank" rel="noopener" title="Abrir el pabellón en Google Maps">🧭 Cómo llegar</a>
+          <button class="act" onclick="downloadICS('${tid}')" title="Descargar los ${upcoming.filter(m => m.date).length} partidos pendientes (.ics)">📅 Añadir al calendario</button>
+          <button class="act" onclick="shareTeam('${tid}')" title="Copiar el enlace a este equipo">🔗 Compartir</button>
+        </div>
+      </div>
+      <div class="tv-grid">
+        <div>
+          ${nextHTML}
+          ${done.length ? `<div class="sec">Forma · últimos ${done.slice(-10).length} partidos</div><div class="card tv-box">${formChart(tid, done.slice(-10))}
+            <ul class="facts">${facts.map(f => `<li>${f}</li>`).join('')}</ul></div>` : ''}
+          ${done.length ? `<div class="sec">Últimos resultados</div><div class="card tv-box">${done.slice(-5).reverse().map(m => matchRow(tid, m, false)).join('')}</div>` : ''}
+          ${upcoming.length > 1 ? `<div class="sec">Siguientes partidos</div><div class="card tv-box">${upcoming.slice(1, 5).map(m => matchRow(tid, m, true)).join('')}</div>` : ''}
+          <details class="cal">
+            <summary>📋 Calendario completo · ${ms.length} partidos</summary>
+            <div class="cal-list">${ms.map(m => matchRow(tid, m, !played(m), m === upcoming[0] ? 'cal-next' : '')).join('')}</div>
+          </details>
+        </div>
+        <div>
+          <div class="sec">Pabellón</div>
+          <div class="card tv-box venue"><b>🏟️ ${esc(t.venue)}</b><br>${esc(t.street)}<br>${esc([t.cp, t.town].filter(Boolean).join(' '))}${t.prov && t.prov !== 'Andorra' ? ' (' + esc(t.prov) + ')' : t.prov === 'Andorra' ? ' (Andorra)' : ''}
+            ${t.day ? `<br>🕒 Juega en casa: <b>${DAYS_ES[t.day] || esc(t.day)}${t.hour ? ' · ' + esc(t.hour) : ''}</b>` : ''}</div>
+          ${!done.length && facts.length ? `<div class="sec">En el grupo</div><div class="card tv-box"><ul class="facts">${facts.map(f => `<li>${f}</li>`).join('')}</ul></div>` : ''}
+          ${t.players?.length ? `<div class="card tv-box">${playersHTML(tid)}</div>` : ''}
+          ${others.length ? `<div class="sec">También en ${esc(t.town)}</div>${others.map(id => { const o = standingOf(id); return `<div class="card e-card" onclick="selectTeam('${id}')" role="button" tabindex="0">${badge(id, 26)}<div class="e-main"><div class="e-name">${esc(TEAMS[id].name)}</div><div class="e-sub">Grup ${groupNum(o.gid)} · ${o.pos}º · ${o.w}-${o.l}</div></div></div>`; }).join('')}` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
+// Players: abbreviated names ("Pol H.") and their stats, best scorers first.
+// Only made 2s and 3s are recorded by the federation (no attempts), so no % for them.
+const ppg = p => p.pj ? p.pts / p.pj : 0;
+// Manual order for specific teams (by team id): these names go first / last, in this order;
+// everyone else keeps the scoring order. Kept here, not in the data, so it survives data updates.
+const PLAYER_ORDER = {
+  '89225': { first: ['Samuel G.'], last: ['Adrian M.', 'Martí S.'] },   // CB MANYANET LES CORTS VERD
+};
+function playersHTML(tid) {
+  let list = [...(TEAMS[tid].players || [])].sort((a, b) => ppg(b) - ppg(a) || b.pts - a.pts);
+  const ord = PLAYER_ORDER[tid];
+  if (ord) {
+    const pick = names => names.map(n => list.find(p => p.n === n)).filter(Boolean);
+    const first = pick(ord.first || []), last = pick(ord.last || []);
+    list = [...first, ...list.filter(p => !first.includes(p) && !last.includes(p)), ...last];
+  }
+  if (!list.length) return '';
+  const TOP = 6;
+  const row = (p, i) => `<tr${i >= TOP ? ' class="pl-extra"' : ''}><td><span class="pl-rank">${i + 1}</span>${esc(p.n)}</td><td>${p.pj}</td>
+    <td class="pl-pts">${ppg(p).toFixed(1)}</td><td>${p.pj ? Math.round(p.min / p.pj) : '–'}</td>
+    <td>${p.t3}</td><td>${p.tl[1] ? Math.round(100 * p.tl[0] / p.tl[1]) + '%' : '–'}</td></tr>`;
+  const head = `<thead><tr><th>Jugador</th><th title="Partidos jugados">PJ</th><th title="Puntos por partido">PTS/P</th><th title="Minutos por partido">MIN/P</th><th title="Triples anotados">T3</th><th title="Tiros libres (% de acierto)">TL%</th></tr></thead>`;
+  // One table (so columns stay aligned); rows past TOP stay hidden until "Ver…"
+  return `<div class="sec">Jugadores · ${list.length}</div>
+    <table class="pl-table">${head}<tbody>${list.map(row).join('')}</tbody></table>
+    ${list.length > TOP ? `<button class="pl-more" onclick="this.previousElementSibling.classList.add('all'); this.remove()">Ver los ${list.length - TOP} restantes ▾</button>` : ''}
+    <div class="pl-note">Según las actas digitales de la Federació: puede que no incluyan todos los partidos. Nombres abreviados.</div>`;
+}
+
+// Google Maps search for the team's home venue
+function directionsURL(tid) {
+  const t = TEAMS[tid];
+  const q = [t.venue, t.street, [t.cp, t.town].filter(Boolean).join(' '), t.prov === 'Andorra' ? 'Andorra' : 'Catalunya'].filter(Boolean).join(', ');
+  return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q);
+}
+
+// Best scorers of the gender on screen (min. half the games of the most-played player)
+function topScorersHTML() {
+  const all = teamsOfGender(gender).flatMap(tid => (TEAMS[tid].players || []).map(p => ({ ...p, tid })));
+  if (!all.length) return '';
+  const minGames = Math.max(1, Math.ceil(Math.max(...all.map(p => p.pj)) / 2));
+  const top = all.filter(p => p.pj >= minGames).sort((a, b) => ppg(b) - ppg(a)).slice(0, 5);
+  return `<div class="sec">🔥 Máximos anotadores</div>` + top.map((p, i) => `<div class="card e-card" onclick="selectTeam('${p.tid}')" role="button" tabindex="0">
+    <span style="font-size:calc(12px*var(--fs));font-weight:700;color:var(--text-3);width:14px;text-align:center">${i + 1}</span>${badge(p.tid, 24)}
+    <div class="e-main"><div class="e-name">${esc(p.n)}</div><div class="e-sub">${esc(TEAMS[p.tid].name)} · ${p.pj} PJ</div></div>
+    <div style="text-align:right"><div class="e-stat">${ppg(p).toFixed(1)}</div><div style="font-size:calc(11px*var(--fs));color:var(--text-3)">PTS/P</div></div></div>`).join('');
+}
+
+// Panel with no selection: leaders, upcoming games and best attack/defence
+function summaryHTML() {
+  const groups = groupsOf(gender);
+  const ids = teamsOfGender(gender);
+  const leaders = groups.map(g => g.standings[0].id);
+  const now = new Date(), week = new Date(now.getTime() + 7 * 864e5);
+  const upcoming = groups.flatMap(g => g.matches).map(m => ({ ...m, date: parseDate(m.dt) }))
+    .filter(m => !played(m) && m.date && m.date >= new Date(now.toDateString()) && m.date <= week)
+    .sort((a, b) => a.date - b.date).slice(0, 8);
+  const avg = (id, k) => { const s = standingOf(id); return s.j ? s[k] / s.j : null; };
+  const topOff = ids.filter(id => avg(id, 'pf') !== null).sort((a, b) => avg(b, 'pf') - avg(a, 'pf')).slice(0, 3);
+  const topDef = ids.filter(id => avg(id, 'pa') !== null).sort((a, b) => avg(a, 'pa') - avg(b, 'pa')).slice(0, 3);
+  const card = (id, right, sub) => `<div class="card e-card" onclick="selectTeam('${id}')" role="button" tabindex="0">${badge(id, 26)}<div class="e-main"><div class="e-name">${esc(TEAMS[id].name)}</div><div class="e-sub">${sub}</div></div>${right}</div>`;
+  const favHTML = favorites.map(id => {
+    const s = standingOf(id), nx = pending(id).find(m => m.date);
+    const opp = nx && TEAMS[nx.h === id ? nx.a : nx.h];
+    const sub = nx ? `Próximo: ${fmtDate(nx.date)} · ${fmtTime(nx.date)} ${nx.h === id ? 'vs' : '@'} ${esc(opp.name)}` : 'Sin partidos pendientes';
+    return card(id, `<div style="text-align:right"><div class="e-stat">${s.pos}º</div><div style="font-size:calc(11px*var(--fs));color:var(--text-3)">G${groupNum(s.gid)} · ${s.w}-${s.l}</div></div>`,
+      `<span class="fav-tag">${TEAMS[id].gender === 'M' ? 'MASC' : 'FEM'}</span> ${sub}`);
+  }).join('');
+  return `<div class="p-pad">
+    ${favorites.length ? `<div class="sec">⭐ Mis equipos</div>${favHTML}` : ''}
+    <div style="text-align:center;padding:6px 0 4px"><div style="font-size:calc(30px*var(--fs))">🏀</div><div style="font-size:calc(13px*var(--fs));color:var(--text-3);line-height:1.7;margin-top:4px">Selecciona un municipio en el mapa<br>o un equipo de la clasificación${favorites.length ? '' : '<br>· marca con ☆ tus equipos para tenerlos aquí ·'}</div></div>
+    <div class="sec">🏆 Líderes de grupo</div>
+    ${leaders.map(id => { const s = standingOf(id); return card(id, `<div style="text-align:right"><div class="e-stat">${s.w}-${s.l}</div><div style="font-size:calc(11px*var(--fs));color:var(--text-3)">${s.pts} pts</div></div>`, `<span class="grp-tag"><span class="grp-dot" style="background:${groupColor(s.gid)}"></span>Grup ${groupNum(s.gid)}</span> · ${esc(TEAMS[id].town)}`); }).join('')}
+    ${upcoming.length ? `<div class="sec">📅 Próximos 7 días</div>${upcoming.map(m => `<div class="card e-card" onclick="selectTeam('${m.h}')" role="button" tabindex="0">${badge(m.h, 22)}<div class="e-main"><div class="e-name" style="font-size:calc(11.5px*var(--fs))">${esc(TEAMS[m.h].name)} – ${esc(TEAMS[m.a].name)}</div><div class="e-sub">${fmtDate(m.date)} · ${fmtTime(m.date)} · ${esc(TEAMS[m.h].town)}</div></div>${badge(m.a, 22)}</div>`).join('')}` : ''}
+    ${topScorersHTML()}
+    <div class="sec">📊 Mejores ataques</div>
+    ${topOff.map(id => card(id, `<div class="e-stat">${avg(id, 'pf').toFixed(1)}</div>`, `${esc(TEAMS[id].town)} · puntos/partido`)).join('')}
+    <div class="sec">🛡️ Mejores defensas</div>
+    ${topDef.map(id => card(id, `<div class="e-stat" style="color:var(--won-text)">${avg(id, 'pa').toFixed(1)}</div>`, `${esc(TEAMS[id].town)} · recibidos/partido`)).join('')}
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GENDER SWITCH + INIT
+// ═══════════════════════════════════════════════════════════════
+function setGender(g, sync = true) {
+  gender = g;
+  document.getElementById('gender-toggle').classList.toggle('on', gender === 'F');
+  document.getElementById('opt-M').classList.toggle('active', gender === 'M');
+  document.getElementById('opt-F').classList.toggle('active', gender === 'F');
+  currentGroup = groupsOf(gender)[0].gid;
+  selectedMuni = null; focusTeam = null;
+  buildGroupTabs(); buildStandings(); refreshMap(); buildPanel();
+  document.getElementById('map-hint').textContent = 'Haz clic en un municipio o en un punto para ver sus equipos';
+  if (sync) syncURL(true);
+}
+const toggleGender = () => setGender(gender === 'M' ? 'F' : 'M');
+
+document.getElementById('season').textContent = DATA.season;
+document.getElementById('data-note').textContent =
+  `Datos de basquetcatala.cat a ${new Date(DATA.scrapedAt).toLocaleDateString('es-ES', { day:'numeric', month:'long', year:'numeric' })} · copia estática`;
+// ═══════════════════════════════════════════════════════════════
+// RESIZABLE COLUMNS (desktop)
+// ═══════════════════════════════════════════════════════════════
+const COLS = { left: { def: 400, min: 260 } };
+const PANEL_MIN = 360, SPLIT_W = 7, STORE_KEY = 'cadet.columnWidths';
+const widths = { left: COLS.left.def };
+
+function applyWidths(save = true) {
+  const body = document.getElementById('body');
+  // Clamp so the team detail always keeps PANEL_MIN px
+  const max = Math.max(COLS.left.min, body.clientWidth - PANEL_MIN - SPLIT_W);
+  widths.left = Math.round(Math.min(Math.max(widths.left, COLS.left.min), max));
+  body.style.setProperty('--left-w', widths.left + 'px');
+  const sp = document.getElementById('split-left');
+  sp.setAttribute('aria-valuemin', COLS.left.min);
+  sp.setAttribute('aria-valuemax', max);
+  sp.setAttribute('aria-valuenow', widths.left);
+  if (save) try { localStorage.setItem(STORE_KEY, JSON.stringify({ left: widths.left })); } catch (e) {}
+}
+
+function initSplitters() {
+  try { const w = JSON.parse(localStorage.getItem(STORE_KEY))?.left; if (w > 0) widths.left = w; } catch (e) {}
+  if (!isMobile()) applyWidths(false);
+  const body = document.getElementById('body');
+  document.querySelectorAll('.splitter').forEach(sp => {
+    const side = sp.dataset.side;
+    sp.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      sp.setPointerCapture(e.pointerId);
+      sp.classList.add('dragging');
+      document.body.classList.add('resizing');
+      hideTooltip();
+    });
+    sp.addEventListener('pointermove', e => {
+      if (!sp.hasPointerCapture(e.pointerId)) return;
+      const r = body.getBoundingClientRect();
+      widths[side] = e.clientX - r.left - SPLIT_W / 2;
+      applyWidths(false);
+    });
+    const end = e => {
+      if (!sp.hasPointerCapture(e.pointerId)) return;
+      sp.releasePointerCapture(e.pointerId);
+      sp.classList.remove('dragging');
+      document.body.classList.remove('resizing');
+      applyWidths(true);
+    };
+    sp.addEventListener('pointerup', end);
+    sp.addEventListener('pointercancel', end);
+    sp.addEventListener('dblclick', () => { widths[side] = COLS[side].def; applyWidths(true); });
+    // Keyboard: arrows move the splitter (Shift = bigger steps), Home restores the default width
+    sp.addEventListener('keydown', e => {
+      const step = e.shiftKey ? 60 : 20;
+      if (e.key === 'ArrowRight') widths[side] += step;
+      else if (e.key === 'ArrowLeft') widths[side] -= step;
+      else if (e.key === 'Home') widths[side] = COLS[side].def;
+      else return;
+      e.preventDefault();
+      applyWidths(true);
+    });
+  });
+  window.addEventListener('resize', () => { if (!isMobile()) applyWidths(false); });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SEARCH (teams of both genders + towns)
+// ═══════════════════════════════════════════════════════════════
+const SEARCH_INDEX = Object.entries(TEAMS).map(([id, t]) => ({ id, name: norm(t.name), hay: norm([t.name, t.club, t.town, t.venue].join(' ')) }));
+const TOWNS = (() => {
+  const byMuni = {};
+  for (const [id, t] of Object.entries(TEAMS)) {
+    const m = muniOf(id);
+    if (m) (byMuni[m] ||= { m, name: t.town, ids: [] }).ids.push(id);
+  }
+  return Object.values(byMuni).map(x => ({ ...x, key: norm(x.name) }));
+})();
+let searchItems = [], searchActive = -1;
+
+function runSearch(q) {
+  const n = norm(q.trim());
+  if (n.length < 2) return [];
+  const words = n.split(/\s+/);
+  const teams = SEARCH_INDEX.filter(x => words.every(w => x.hay.includes(w)))
+    // Names starting with the query first, then the gender on screen
+    .sort((a, b) => b.name.startsWith(n) - a.name.startsWith(n) || (TEAMS[b.id].gender === gender) - (TEAMS[a.id].gender === gender) || a.name.localeCompare(b.name))
+    .slice(0, 10).map(x => ({ type: 'team', id: x.id }));
+  const towns = TOWNS.filter(t => t.key.includes(n)).sort((a, b) => b.key.startsWith(n) - a.key.startsWith(n) || b.ids.length - a.ids.length)
+    .slice(0, 5).map(t => ({ type: 'town', ...t }));
+  return [...teams, ...towns];
+}
+
+function renderSearch() {
+  const box = document.getElementById('search-results');
+  const input = document.getElementById('search');
+  if (!input.value.trim() || norm(input.value.trim()).length < 2) { closeSearch(); return; }
+  let html = '', lastType = null;
+  searchItems.forEach((it, i) => {
+    if (it.type !== lastType) { html += `<div class="sr-sec">${it.type === 'team' ? 'Equipos' : 'Municipios'}</div>`; lastType = it.type; }
+    const cls = `sr-item${i === searchActive ? ' active' : ''}`;
+    if (it.type === 'team') {
+      const t = TEAMS[it.id], st = standingOf(it.id);
+      html += `<div class="${cls}" role="option" id="sr-${i}" onmousedown="event.preventDefault()" onclick="pickSearch(${i})">${badge(it.id, 26)}
+        <div class="sr-main"><div class="sr-name">${isFav(it.id) ? '<span class="s-fav">★</span>' : ''}${esc(t.name)}</div><div class="sr-sub">${esc(t.town)} · ${st.pos}º de ${st.of}</div></div>
+        <span class="sr-tag" style="background:${groupColor(st.gid)};color:${textOn(groupColor(st.gid))}">${t.gender === 'M' ? 'MASC' : 'FEM'} · G${groupNum(st.gid)}</span></div>`;
+    } else {
+      const nm = it.ids.filter(id => TEAMS[id].gender === 'M').length, nf = it.ids.length - nm;
+      html += `<div class="${cls}" role="option" id="sr-${i}" onmousedown="event.preventDefault()" onclick="pickSearch(${i})"><span style="font-size:calc(18px*var(--fs));width:26px;text-align:center">📍</span>
+        <div class="sr-main"><div class="sr-name">${esc(it.name)}</div><div class="sr-sub">${[nm && nm + ' masc.', nf && nf + ' fem.'].filter(Boolean).join(' · ')}</div></div></div>`;
+    }
+  });
+  box.innerHTML = html || `<div class="sr-empty">Sin resultados para «${esc(input.value.trim())}»</div>`;
+  box.classList.add('open');
+  input.setAttribute('aria-expanded', 'true');
+  input.setAttribute('aria-activedescendant', searchActive >= 0 ? 'sr-' + searchActive : '');
+  document.getElementById('sr-' + searchActive)?.scrollIntoView({ block: 'nearest' });
+}
+
+function closeSearch() {
+  document.getElementById('search-results').classList.remove('open');
+  document.getElementById('search').setAttribute('aria-expanded', 'false');
+}
+
+function pickSearch(i) {
+  const it = searchItems[i];
+  if (!it) return;
+  const input = document.getElementById('search');
+  input.value = '';
+  closeSearch();
+  input.blur();
+  if (it.type === 'team') { selectTeam(it.id, { zoom: true }); return; }
+  // A town: switch gender if it only has teams of the other one
+  if (!it.ids.some(id => TEAMS[id].gender === gender)) setGender(gender === 'M' ? 'F' : 'M', false);
+  selectMuni(it.m);
+  zoomToMuni(it.m);
+}
+
+function initSearch() {
+  const input = document.getElementById('search');
+  input.addEventListener('input', () => { searchItems = runSearch(input.value); searchActive = searchItems.length ? 0 : -1; renderSearch(); });
+  input.addEventListener('focus', () => { if (input.value) renderSearch(); });
+  input.addEventListener('blur', () => setTimeout(closeSearch, 120));
+  input.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (!searchItems.length) return;
+      searchActive = (searchActive + (e.key === 'ArrowDown' ? 1 : -1) + searchItems.length) % searchItems.length;
+      renderSearch();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      pickSearch(Math.max(searchActive, 0));
+    } else if (e.key === 'Escape') {
+      input.value = ''; closeSearch(); input.blur();
+    }
+  });
+  // "/" focuses the search box from anywhere (unless typing elsewhere)
+  document.addEventListener('keydown', e => {
+    if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); input.focus(); }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SHAREABLE URL: #sexo=F&grupo=23373&equipo=89331 (or &municipio=08019)
+// ═══════════════════════════════════════════════════════════════
+let restoringURL = false;
+
+function stateHash() {
+  const p = new URLSearchParams({ sexo: gender, grupo: currentGroup });
+  if (focusTeam) p.set('equipo', focusTeam);
+  else if (selectedMuni) p.set('municipio', selectedMuni);
+  return '#' + p;
+}
+// push = new history entry (selections), so the back button undoes them
+function syncURL(push) {
+  if (restoringURL) return;
+  const h = stateHash();
+  if (h === location.hash) return;
+  history[push ? 'pushState' : 'replaceState'](null, '', h);
+}
+
+function applyURL() {
+  const p = new URLSearchParams(location.hash.slice(1));
+  restoringURL = true;
+  try {
+    const g = p.get('sexo'), team = p.get('equipo'), muni = p.get('municipio'), gid = +p.get('grupo');
+    if (team && TEAMS[team]) { selectTeam(team); return; }
+    if ((g === 'M' || g === 'F') && g !== gender) setGender(g);
+    if (DATA.groups.some(x => x.gid === gid && x.gender === gender)) showGroup(gid);
+    if (muni && /^(\d{5}|AND)$/.test(muni)) selectMuni(muni);
+    else if (selectedMuni) clearSelection();
+  } finally {
+    restoringURL = false;
+  }
+}
+
+async function shareTeam(tid) {
+  const t = TEAMS[tid];
+  const url = location.href.split('#')[0] + '#' + new URLSearchParams({ sexo: t.gender, grupo: t.group, equipo: tid });
+  if (navigator.share && isMobile()) {
+    try { await navigator.share({ title: `${t.name} · Cadet Interterritorial`, url }); return; }
+    catch (e) { if (e.name === 'AbortError') return; }
+  }
+  try { await navigator.clipboard.writeText(url); toast('🔗 Enlace copiado'); }
+  catch (e) { toast('No se pudo copiar el enlace'); }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CALENDAR EXPORT (.ics with the team's pending games)
+// ═══════════════════════════════════════════════════════════════
+const ICS_TZ = ['BEGIN:VTIMEZONE', 'TZID:Europe/Madrid',
+  'BEGIN:DAYLIGHT', 'TZOFFSETFROM:+0100', 'TZOFFSETTO:+0200', 'TZNAME:CEST', 'DTSTART:19700329T020000', 'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU', 'END:DAYLIGHT',
+  'BEGIN:STANDARD', 'TZOFFSETFROM:+0200', 'TZOFFSETTO:+0100', 'TZNAME:CET', 'DTSTART:19701025T030000', 'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU', 'END:STANDARD',
+  'END:VTIMEZONE'];
+
+function downloadICS(tid) {
+  const t = TEAMS[tid];
+  const games = pending(tid).filter(m => m.date);
+  if (!games.length) { toast('No hay partidos pendientes con fecha'); return; }
+  const pad = n => String(n).padStart(2, '0');
+  const local = d => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+  const text = s => String(s).replace(/[\;,]/g, c => '\\' + c).replace(/\n/g, '\\n');
+  // RFC 5545: lines longer than 75 octets are folded (60 chars keeps multi-byte text safe)
+  const fold = line => Array.from(line).reduce((acc, ch, i) => acc + (i && i % 60 === 0 ? '\r\n ' : '') + ch, '');
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+  const events = games.map(m => {
+    const home = TEAMS[m.h], end = new Date(m.date.getTime() + 90 * 60000);
+    return ['BEGIN:VEVENT',
+      `UID:fcbq-${m.h}-${m.a}-${local(m.date)}@cadet-interterritorial`,
+      `DTSTAMP:${stamp}`,
+      `DTSTART;TZID=Europe/Madrid:${local(m.date)}`,
+      `DTEND;TZID=Europe/Madrid:${local(end)}`,
+      `SUMMARY:${text(`🏀 ${home.name} – ${TEAMS[m.a].name}`)}`,
+      `LOCATION:${text([home.venue, home.street, [home.cp, home.town].filter(Boolean).join(' ')].filter(Boolean).join(', '))}`,
+      `DESCRIPTION:${text(`Cadet Interterritorial ${t.gender === 'M' ? 'masculí' : 'femení'} · Grup ${groupNum(t.group)}. Horario según basquetcatala.cat a ${new Date(DATA.scrapedAt).toLocaleDateString('es-ES')}; puede cambiar.`)}`,
+      'END:VEVENT'];
+  }).flat();
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Cadet Interterritorial//ES', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+    `X-WR-CALNAME:${text(t.name)}`, ...ICS_TZ, ...events, 'END:VCALENDAR'].map(fold).join('\r\n') + '\r\n';
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' })),
+    download: `${norm(t.name).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}.ics`,
+  });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast(`📅 ${games.length} partido${games.length > 1 ? 's' : ''} exportado${games.length > 1 ? 's' : ''}`);
+}
+
+initSplitters();
+initSearch();
+applyA11y();
+new ResizeObserver(updateCompact).observe(document.getElementById('standings'));
+currentGroup = groupsOf(gender)[0].gid;
+buildGroupTabs(); buildStandings(); buildPanel();
+if (location.hash) applyURL();
+history.replaceState(null, '', stateHash());
+window.addEventListener('hashchange', applyURL);
+
+fetch('https://cdn.jsdelivr.net/npm/es-atlas@0.6.0/es/municipalities.json')
+  .then(r => r.json())
+  .then(initMap)
+  .catch(err => {
+    console.error('Map load error:', err);
+    document.getElementById('map-hint').textContent = '⚠ No se pudo cargar el mapa de municipios';
+  });
+</script>
+</body>
+</html>
