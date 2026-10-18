@@ -28,7 +28,10 @@ Al pinchar un equipo (en la clasificación, el mapa, el buscador o un partido) l
 - **Forma**: gráfico con la diferencia de puntos de los últimos partidos, racha, balance en casa y fuera, distancia al líder y ranking de ataque y defensa dentro del grupo
 - Últimos resultados y siguientes partidos; al pinchar en un rival se abre su ficha
 - Pabellón con dirección y día y hora habitual de juego en casa
-- **Jugadores**: nombre abreviado ("Pol H.") con partidos, puntos por partido, minutos por partido, triples y % de tiros libres, ordenados por anotación
+- **Jugadores**, a todo el ancho: nombre abreviado ("Pol H.") con partidos, minutos (totales y por partido), puntos (totales y por partido), tiros de 2 y triples anotados, tiros libres (anotados/intentados y %), faltas por partido y % de los puntos del equipo, más una fila con el total del equipo
+  - Se ordena pulsando cualquier columna (otra vez para invertir); por defecto, por anotación
+  - Líderes del equipo: máximo anotador, más triples, mejor en tiros libres (mín. 10 intentos) y más minutos
+  - La Federació solo publica los tiros de 2 y triples anotados (no los intentos) y las faltas por partido redondeadas
 - Otros equipos del mismo municipio, con un botón para verlos todos
 
 Al pinchar un municipio con varios equipos se muestra la lista para elegir uno; si solo tiene uno, se abre directamente su ficha.
