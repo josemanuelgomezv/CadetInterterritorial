@@ -4,10 +4,18 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Cadet Interterritorial</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+  <!-- Installable app (PWA): manifest, icons and sw.js for offline use -->
+  <link rel="manifest" href="manifest.webmanifest"/>
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml"/>
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png"/>
+  <meta name="theme-color" content="#1a1f3a"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-title" content="Cadet Inter"/>
+  <!-- crossorigin: CORS responses, so the service worker can cache them for offline use -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js" crossorigin="anonymous"></script>
   <script src="data/cadet-data.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" crossorigin="anonymous"/>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%;overflow:hidden}
@@ -68,6 +76,7 @@
     #subtitle{color:var(--text-2);font-size:calc(12px*var(--fs));margin-top:2px}
     .hdr-right{display:flex;align-items:center;gap:10px}
     .pill-btn{display:flex;align-items:center;gap:8px;cursor:pointer;min-height:34px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-2);font-size:calc(13px*var(--fs));font-family:'DM Sans',sans-serif;transition:all .2s;user-select:none;text-decoration:none;white-space:nowrap}
+    .pill-btn[hidden]{display:none}
     .pill-btn:hover{background:var(--accent-bg);border-color:var(--accent)}
     .opt{color:var(--text-3);font-weight:600;letter-spacing:.04em;transition:color .2s}
     .opt.active{color:var(--accent)}
@@ -195,6 +204,7 @@
     #data-note{font-size:calc(11px*var(--fs));color:var(--text-3);padding:6px 10px;border-bottom:1px solid var(--border);background:var(--bg-left-tab)}
     #standings-scroll{flex:1;overflow-y:auto}
     @media (min-width:769px){ #standings-scroll{overflow:visible} }
+    #data-note.offline::after{content:' · ⚠ ' attr(data-offline);color:var(--lost-text);font-weight:700}
     .grp-label{display:flex;align-items:center;gap:6px;font-size:calc(11px*var(--fs));font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:10px 10px 6px}
     .view-sw{margin-left:auto;display:inline-flex;border:1px solid var(--border);border-radius:14px;overflow:hidden;text-transform:none;letter-spacing:0;flex-shrink:0}
     .view-sw button{border:none;background:transparent;color:var(--text-2);font:600 calc(11px*var(--fs)) 'DM Sans',sans-serif;padding:3px 10px;min-height:26px;cursor:pointer}
@@ -347,7 +357,7 @@
       #title{font-size:calc(16px*var(--fs));letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       #title .t-long{display:none}
       #header .pill-btn{padding:5px 8px}
-      #subtitle,#theme-toggle .lbl,#a11y-btn .lbl{display:none}
+      #subtitle,#theme-toggle .lbl,#a11y-btn .lbl,#install-btn .lbl{display:none}
       #header{flex-wrap:wrap;row-gap:6px}
       #search-wrap{order:3;flex-basis:100%;max-width:none;margin:0}
       #search-key{display:none}
@@ -384,6 +394,7 @@
     <div id="search-results" role="listbox"></div>
   </div>
   <div class="hdr-right">
+    <button id="install-btn" class="pill-btn" onclick="installApp()" hidden title="Instalar la app en este dispositivo" data-i18n-title="Instalar la app en este dispositivo"><span aria-hidden="true">📲</span><span class="lbl" data-i18n="Instalar">Instalar</span></button>
     <button id="lang-toggle" class="pill-btn" onclick="setLang(LANG === 'ca' ? 'es' : 'ca')" title="Cambiar a castellano" lang="ca">
       <span class="opt" id="opt-ca">CA</span><span class="opt" aria-hidden="true">·</span><span class="opt" id="opt-es">ES</span>
     </button>
@@ -628,6 +639,9 @@ const CA = {
   'Jornada siguiente': 'Jornada següent',
   'Descansa: {t}': 'Descansa: {t}',
   'Aplazado': 'Ajornat',
+  'Instalar la app en este dispositivo': 'Instal·la l’app en aquest dispositiu',
+  'Instalar': 'Instal·la',
+  'sin conexión': 'sense connexió',
   '⚠ No se pudo cargar el mapa de municipios': '⚠ No s’ha pogut carregar el mapa de municipis',
 };
 const tr = (s, v = {}) => (LANG === 'ca' ? CA[s] ?? s : s).replace(/\{(\w+)\}/g, (_, k) => v[k]);
@@ -649,6 +663,7 @@ function applyStaticLang() {
   const lt = document.getElementById('lang-toggle');
   lt.title = LANG === 'ca' ? 'Cambiar a castellano' : 'Canvia a català';
   lt.lang = LANG === 'ca' ? 'es' : 'ca';
+  document.getElementById('data-note').dataset.offline = tr('sin conexión');
   document.getElementById('data-note').textContent = tr('Datos de basquetcatala.cat a {d} · copia estática',
     { d: new Date(DATA.scrapedAt).toLocaleDateString(LOCALE(), { day:'numeric', month:'long', year:'numeric' }) });
 }
@@ -1738,6 +1753,29 @@ buildGroupTabs(); buildStandings(); buildPanel();
 if (location.hash) applyURL();
 history.replaceState(null, '', stateHash());
 window.addEventListener('hashchange', applyURL);
+
+// ── Installable app: offline cache (sw.js) and the "Instal·la" button ──
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol))
+  navigator.serviceWorker.register('sw.js').catch(err => console.warn('Service worker:', err));
+let installPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  installPrompt = e;
+  document.getElementById('install-btn').hidden = false;
+});
+window.addEventListener('appinstalled', () => { installPrompt = null; document.getElementById('install-btn').hidden = true; });
+async function installApp() {
+  if (!installPrompt) return;
+  installPrompt.prompt();
+  await installPrompt.userChoice;
+  installPrompt = null;
+  document.getElementById('install-btn').hidden = true;
+}
+// Offline: say so next to the data date
+const updateOnline = () => document.getElementById('data-note').classList.toggle('offline', !navigator.onLine);
+window.addEventListener('online', updateOnline);
+window.addEventListener('offline', updateOnline);
+updateOnline();
 
 fetch('https://cdn.jsdelivr.net/npm/es-atlas@0.6.0/es/municipalities.json')
   .then(r => r.json())

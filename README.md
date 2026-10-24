@@ -65,6 +65,10 @@ Al pinchar un municipio con varios equipos se muestra la lista para elegir uno; 
 - Todo se puede usar con **teclado**: grupos, filas de la clasificación, tarjetas, leyenda y los puntos del mapa (Tab + Enter), con foco siempre visible; enlace "Saltar a la clasificación"
 - **Lectores de pantalla**: encabezados, etiquetas descriptivas ("2º CB Banyoles, Banyoles: 3 ganados, 3 perdidos, 9 puntos") y avisos de la selección actual
 
+### 📲 App instalable
+- Se puede **instalar en el móvil** o el ordenador como una app (botón **Instal·la** en Chrome/Edge/Android; en iPhone: Compartir → *Afegir a la pantalla d'inici*), con su icono y a pantalla completa
+- **Funciona sin conexión** con los últimos datos vistos: `sw.js` guarda la página, los datos, las librerías, las fuentes y el mapa. La página y los datos se piden primero a la red, así que los datos nuevos aparecen en cuanto se publican; sin conexión se avisa junto a la fecha de los datos y los escudos se ven con las iniciales
+
 ### Otros
 - **Idioma**: catalán (por defecto) o castellano, con el botón **CA · ES** de la cabecera; se recuerda en el navegador. Los textos se escriben en castellano en el código y pasan por `tr()`, que busca su versión catalana en la tabla `CA` de `index.html`
 - Diseño de escritorio en dos columnas: a la izquierda la clasificación con el mapa debajo, y la ficha de equipo como zona principal
@@ -107,6 +111,9 @@ El extractor localiza la categoría por su nombre ("Cadet … Interterritorial")
 
 ```
 index.html              Página (HTML + CSS + JS)
+manifest.webmanifest    Datos de la app instalable (nombre, icono, colores)
+sw.js                   Service worker: caché para usarla sin conexión
+icons/                  Icono de la app (SVG y PNG)
 cal/
   ca/<id>.ics, es/<id>.ics  Calendario de cada equipo (generado)
 data/
