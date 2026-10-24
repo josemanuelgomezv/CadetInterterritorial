@@ -160,7 +160,11 @@
     .pl-note{font-size:calc(11px*var(--fs));color:var(--text-3);margin-top:5px;line-height:1.4}
 
     /* ── ACCESSIBILITY MENU ── */
-    #a11y-wrap{position:relative}
+    #a11y-wrap,#install-wrap{position:relative}
+    #install-help{display:none;position:absolute;left:0;top:calc(100% + 8px);z-index:200;width:min(300px,calc(100vw - 24px));background:var(--bg-card);color:var(--text);border:2px solid var(--border);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.25);padding:14px}
+    #install-help.open{display:block}
+    #install-help h2{font-size:calc(14px*var(--fs));margin-bottom:8px}
+    #install-help p{font-size:calc(13px*var(--fs));line-height:1.5;color:var(--text-2)}
     #a11y-menu{position:absolute;right:0;top:calc(100% + 8px);z-index:200;width:min(300px,calc(100vw - 24px));background:var(--bg-card);color:var(--text);border:2px solid var(--border);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.25);padding:14px;display:none}
     #a11y-menu.open{display:block}
     #a11y-menu h2{font-size:calc(14px*var(--fs));margin-bottom:10px}
@@ -394,7 +398,14 @@
     <div id="search-results" role="listbox"></div>
   </div>
   <div class="hdr-right">
-    <button id="install-btn" class="pill-btn" onclick="installApp()" hidden title="Instalar la app en este dispositivo" data-i18n-title="Instalar la app en este dispositivo"><span aria-hidden="true">📲</span><span class="lbl" data-i18n="Instalar">Instalar</span></button>
+    <div id="install-wrap">
+      <button id="install-btn" class="pill-btn" onclick="installApp()" hidden aria-haspopup="true" aria-expanded="false" aria-controls="install-help" title="Instalar la app en este dispositivo" data-i18n-title="Instalar la app en este dispositivo"><span aria-hidden="true">📲</span><span class="lbl" data-i18n="Instalar">Instalar</span></button>
+      <div id="install-help" role="dialog" aria-labelledby="install-title">
+        <h2 id="install-title" data-i18n="Instalar la app">Instalar la app</h2>
+        <p id="install-steps"></p>
+        <button class="a11y-reset" onclick="toggleInstallHelp(false)" data-i18n="Entendido">Entendido</button>
+      </div>
+    </div>
     <button id="lang-toggle" class="pill-btn" onclick="setLang(LANG === 'ca' ? 'es' : 'ca')" title="Cambiar a castellano" lang="ca">
       <span class="opt" id="opt-ca">CA</span><span class="opt" aria-hidden="true">·</span><span class="opt" id="opt-es">ES</span>
     </button>
@@ -641,6 +652,14 @@ const CA = {
   'Aplazado': 'Ajornat',
   'Instalar la app en este dispositivo': 'Instal·la l’app en aquest dispositiu',
   'Instalar': 'Instal·la',
+  'Instalar la app': 'Instal·la l’app',
+  'Entendido': 'Entesos',
+  'En el iPhone o iPad: pulsa el botón Compartir (el cuadrado con la flecha) y después «Añadir a pantalla de inicio».':
+    'A l’iPhone o iPad: prem el botó Compartir (el quadrat amb la fletxa) i després «Afegir a la pantalla d’inici».',
+  'Abre el menú del navegador (⋮, arriba a la derecha) y pulsa «Instalar aplicación» o «Añadir a pantalla de inicio».':
+    'Obre el menú del navegador (⋮, a dalt a la dreta) i prem «Instal·la l’aplicació» o «Afegeix a la pantalla d’inici».',
+  'Pulsa el icono de instalar de la barra de direcciones, o abre el menú del navegador y elige «Instalar Cadet Inter».':
+    'Prem la icona d’instal·lar de la barra d’adreces, o obre el menú del navegador i tria «Instal·la Cadet Inter».',
   'sin conexión': 'sense connexió',
   '⚠ No se pudo cargar el mapa de municipios': '⚠ No s’ha pogut carregar el mapa de municipis',
 };
@@ -833,9 +852,13 @@ function toggleA11yMenu(force) {
   btn.setAttribute('aria-expanded', open);
   if (open) menu.querySelector('button').focus();
 }
-document.addEventListener('click', e => { if (!e.target.closest('#a11y-wrap')) toggleA11yMenu(false); });
+document.addEventListener('click', e => {
+  if (!e.target.closest('#a11y-wrap')) toggleA11yMenu(false);
+  if (!e.target.closest('#install-wrap')) toggleInstallHelp(false);
+});
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && document.getElementById('a11y-menu').classList.contains('open')) { toggleA11yMenu(false); document.getElementById('a11y-btn').focus(); }
+  if (e.key === 'Escape' && document.getElementById('install-help').classList.contains('open')) { toggleInstallHelp(false); document.getElementById('install-btn').focus(); }
   // Elements with role="button" that aren't real buttons: Enter / Space activate them
   const t = e.target;
   if ((e.key === 'Enter' || e.key === ' ') && t.getAttribute?.('role') === 'button' && !/^(BUTTON|A|INPUT|SELECT|TEXTAREA)$/.test(t.tagName) && !t.closest('svg')) {
@@ -1757,19 +1780,30 @@ window.addEventListener('hashchange', applyURL);
 // ── Installable app: offline cache (sw.js) and the "Instal·la" button ──
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol))
   navigator.serviceWorker.register('sw.js').catch(err => console.warn('Service worker:', err));
+// The button is always there (except inside the installed app): it installs directly when the
+// browser offers it (Chrome / Edge / Android) and otherwise explains how (iPhone never offers it)
 let installPrompt = null;
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  installPrompt = e;
-  document.getElementById('install-btn').hidden = false;
-});
-window.addEventListener('appinstalled', () => { installPrompt = null; document.getElementById('install-btn').hidden = true; });
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+document.getElementById('install-btn').hidden = isStandalone() || !/^https?:$/.test(location.protocol);
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installPrompt = e; });
+window.addEventListener('appinstalled', () => { installPrompt = null; toggleInstallHelp(false); document.getElementById('install-btn').hidden = true; });
 async function installApp() {
-  if (!installPrompt) return;
+  if (!installPrompt) { toggleInstallHelp(); return; }
   installPrompt.prompt();
   await installPrompt.userChoice;
   installPrompt = null;
-  document.getElementById('install-btn').hidden = true;
+}
+function toggleInstallHelp(force) {
+  const box = document.getElementById('install-help'), btn = document.getElementById('install-btn');
+  const open = force ?? !box.classList.contains('open');
+  if (open) document.getElementById('install-steps').textContent = tr(isIOS
+    ? 'En el iPhone o iPad: pulsa el botón Compartir (el cuadrado con la flecha) y después «Añadir a pantalla de inicio».'
+    : /Android/.test(navigator.userAgent)
+      ? 'Abre el menú del navegador (⋮, arriba a la derecha) y pulsa «Instalar aplicación» o «Añadir a pantalla de inicio».'
+      : 'Pulsa el icono de instalar de la barra de direcciones, o abre el menú del navegador y elige «Instalar Cadet Inter».');
+  box.classList.toggle('open', open);
+  btn.setAttribute('aria-expanded', open);
 }
 // Offline: say so next to the data date
 const updateOnline = () => document.getElementById('data-note').classList.toggle('offline', !navigator.onLine);

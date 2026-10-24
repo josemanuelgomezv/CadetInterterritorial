@@ -66,7 +66,7 @@ Al pinchar un municipio con varios equipos se muestra la lista para elegir uno; 
 - **Lectores de pantalla**: encabezados, etiquetas descriptivas ("2º CB Banyoles, Banyoles: 3 ganados, 3 perdidos, 9 puntos") y avisos de la selección actual
 
 ### 📲 App instalable
-- Se puede **instalar en el móvil** o el ordenador como una app (botón **Instal·la** en Chrome/Edge/Android; en iPhone: Compartir → *Afegir a la pantalla d'inici*), con su icono y a pantalla completa
+- Se puede **instalar en el móvil** o el ordenador como una app (botón **📲 Instal·la** de la cabecera: instala directamente cuando el navegador lo permite y, si no, por ejemplo en iPhone, explica los pasos), con su icono y a pantalla completa
 - **Funciona sin conexión** con los últimos datos vistos: `sw.js` guarda la página, los datos, las librerías, las fuentes y el mapa. La página y los datos se piden primero a la red, así que los datos nuevos aparecen en cuanto se publican; sin conexión se avisa junto a la fecha de los datos y los escudos se ven con las iniciales
 
 ### Otros
