@@ -284,6 +284,7 @@
     .nx-team{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;font-size:calc(12px*var(--fs));font-weight:600;min-width:0}
     .nx-team.me{color:var(--accent)}
     .nx-vs{font-family:'Bebas Neue',sans-serif;font-size:calc(22px*var(--fs));color:var(--text-3)}
+    .nx-score{font-family:'Bebas Neue',sans-serif;font-size:calc(32px*var(--fs));color:var(--text);white-space:nowrap}
     .nx-venue{font-size:calc(12px*var(--fs));color:var(--text-2);text-align:center;line-height:1.5}
     .nx-venue a{color:var(--accent);font-weight:600}
     .form-chart{display:block;width:100%;height:auto;max-height:calc(110px*var(--fs));margin-top:6px}
@@ -861,7 +862,9 @@ function formChart(tid, games) {
 function teamViewHTML(tid) {
   const t = TEAMS[tid], s = standingOf(tid), g = groupOfTeam(tid), color = clubColor(tid);
   const ms = matchesOf(tid), done = ms.filter(played), upcoming = pending(tid);
-  const next = upcoming.find(m => m.date) || upcoming[0];
+  // Today's match stays as "next" once played, now with its result
+  const nextUp = ms.filter(m => played(m) ? m.date && m.date >= today() : upcoming.includes(m));
+  const next = nextUp.find(m => m.date) || nextUp[0];
   const others = teamsInMuni(muniOf(tid)).filter(x => x !== tid);
 
   // Streak, home / away and ranks within the group
@@ -883,14 +886,15 @@ function teamViewHTML(tid) {
   let nextHTML = '';
   if (next) {
     const host = next.h, days = next.date ? Math.round((new Date(next.date.toDateString()) - today()) / 864e5) : null;
-    const when = days === null ? '' : days === 0 ? 'Hoy' : days === 1 ? 'Mañana' : `En ${days} días`;
+    const fin = played(next), o = fin && outcome(tid, next);
+    const when = fin ? `Final · ${o.won ? 'Victoria' : 'Derrota'}` : days === null ? '' : days === 0 ? 'Hoy' : days === 1 ? 'Mañana' : `En ${days} días`;
     const side = id => `<div class="nx-team${id === tid ? ' me' : ''}">${badge(id, 44)}<span>${esc(TEAMS[id].name)}</span></div>`;
     nextHTML = `<div class="sec">Próximo partido</div>
       <div class="card nx-card">
-        <div class="nx-when">${when ? `<b>${when}</b> · ` : ''}${fmtDate(next.date)}${next.date ? ' · ' + fmtTime(next.date) : ''}${next.st === 'ajornat' ? ' · aplazado' : ''}</div>
-        <div class="nx-teams">${side(next.h)}<span class="nx-vs">VS</span>${side(next.a)}</div>
+        <div class="nx-when">${when ? `<b${fin ? ` style="color:${o.won ? 'var(--won-text)' : 'var(--lost-text)'}"` : ''}>${when}</b> · ` : ''}${fmtDate(next.date)}${next.date ? ' · ' + fmtTime(next.date) : ''}${next.st === 'ajornat' ? ' · aplazado' : ''}</div>
+        <div class="nx-teams">${side(next.h)}${fin ? `<span class="nx-score" aria-label="Resultado ${next.hs} a ${next.as}">${next.hs}-${next.as}</span>` : '<span class="nx-vs">VS</span>'}${side(next.a)}</div>
         <div class="nx-venue">🏟️ ${esc(TEAMS[host].venue)} · ${esc(TEAMS[host].town)} ${host === tid ? '(en casa)' : '(fuera)'}
-          · <a href="${directionsURL(host)}" target="_blank" rel="noopener">🧭 Cómo llegar</a></div>
+          ${fin ? '' : `· <a href="${directionsURL(host)}" target="_blank" rel="noopener">🧭 Cómo llegar</a>`}</div>
       </div>`;
   }
 
