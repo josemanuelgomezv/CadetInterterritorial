@@ -24,7 +24,7 @@ Una sola página HTML, sin frameworks ni build steps.
 Al pinchar un equipo (en la clasificación, el mapa, el buscador o un partido) la zona principal muestra **solo ese equipo**:
 - Escudo del club, también en la clasificación, los resultados y el buscador (si no carga, se ven sus iniciales)
 - Posición, balance, puntos, puntos a favor / en contra por partido y diferencia
-- **Próximo partido** destacado: rival, cuenta atrás ("En 6 días"), pabellón y cómo llegar
+- **Próximo partido** destacado: rival, cuenta atrás ("En 6 días"), pabellón y cómo llegar, con una previa: resultado de la ida si ya se han enfrentado y los dos equipos cara a cara (posición, balance, últimos 5, puntos a favor y en contra por partido), con el mejor de cada fila resaltado
 - **Forma**: gráfico con la diferencia de puntos de los últimos partidos, racha, balance en casa y fuera, distancia al líder y ranking de ataque y defensa dentro del grupo
 - Últimos resultados y siguientes partidos; al pinchar en un rival se abre su ficha
 - Pabellón con dirección y día y hora habitual de juego en casa
@@ -39,7 +39,7 @@ Al pinchar un municipio con varios equipos se muestra la lista para elegir uno; 
 
 - **⭐ Mi equipo**: marca equipos como favoritos (se guardan en el navegador); aparecen arriba del resumen con su posición y próximo partido, y con ★ en la clasificación
 - **🧭 Cómo llegar**: abre el pabellón en Google Maps
-- **📅 Añadir al calendario**: descarga un `.ics` con todos los partidos pendientes del equipo (Google Calendar, Apple, Outlook…)
+- **📅 Calendario**: suscripción al calendario del equipo (Google Calendar, o `webcal://` para Apple, Outlook y otros) con todos sus partidos y los resultados de los ya jugados. Se actualiza solo cada vez que se publican datos nuevos; también se puede descargar el `.ics` como copia fija
 - **🔗 Compartir**: copia el enlace directo al equipo
 - **Calendario completo** desplegable con todos los partidos de la fase
 
@@ -106,12 +106,14 @@ El extractor localiza la categoría por su nombre ("Cadet … Interterritorial")
 
 ```
 index.html              Página (HTML + CSS + JS)
+cal/
+  ca/<id>.ics, es/<id>.ics  Calendario de cada equipo (generado)
 data/
   cadet-data.js         Datos que usa la página (generado)
   fcbq_raw.json         Datos extraídos de basquetcatala.cat
 scripts/
   extract.js            Extractor para la consola del navegador
-  build_data.py         fcbq_raw.json → cadet-data.js (asigna municipio a cada equipo)
+  build_data.py         fcbq_raw.json → cadet-data.js (asigna municipio a cada equipo) y calendarios de cal/
   update.py             Descargas → data/, regenera los datos y opcionalmente commit + push
 ```
 

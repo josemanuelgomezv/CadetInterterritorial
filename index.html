@@ -102,6 +102,11 @@
     .fav-btn:hover{transform:scale(1.1);background:rgba(255,255,255,.32)}
     .fav-btn.on{background:#fff;color:#e9a23b}
     .tc-actions{display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px 2px}
+    .cal-sub{margin:8px 12px 2px;padding:10px 12px;border-radius:10px;background:var(--accent-bg);font-size:calc(12px*var(--fs));color:var(--text-2);line-height:1.5}
+    .cal-sub[hidden]{display:none}
+    .cal-links{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px}
+    .cal-links .act{text-decoration:none}
+    .cal-sub small{color:var(--text-3);font-size:calc(11px*var(--fs))}
     .act{display:inline-flex;align-items:center;gap:5px;min-height:32px;padding:5px 12px;border-radius:16px;border:1px solid var(--border);background:var(--bg-right);color:var(--text-2);font:600 calc(12px*var(--fs)) 'DM Sans',sans-serif;cursor:pointer;text-decoration:none;white-space:nowrap}
     .act:hover{border-color:var(--accent);color:var(--accent)}
     details.cal{margin-top:12px;border:1px solid var(--border-sub);border-radius:8px}
@@ -292,6 +297,16 @@
     .nx-team.me{color:var(--accent)}
     .nx-vs{font-family:'Bebas Neue',sans-serif;font-size:calc(22px*var(--fs));color:var(--text-3)}
     .nx-score{font-family:'Bebas Neue',sans-serif;font-size:calc(32px*var(--fs));color:var(--text);white-space:nowrap}
+    .nx-preview{margin-top:10px;padding-top:8px;border-top:1px solid var(--border-sub)}
+    .nx-leg{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;font-size:calc(12px*var(--fs));color:var(--text-2);margin-bottom:6px;text-align:center}
+    .nx-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:3px 0;font-size:calc(12.5px*var(--fs));font-variant-numeric:tabular-nums}
+    .nx-row>span{text-align:center;color:var(--text-2)}
+    .nx-row small{font-size:calc(11px*var(--fs));color:var(--text-3);text-align:center;white-space:nowrap}
+    .nx-row .nx-best{color:var(--text);font-weight:700}
+    .nx-form{display:inline-flex;gap:2px}
+    .nx-form i{font-style:normal;width:calc(15px*var(--fs));height:calc(15px*var(--fs));border-radius:3px;font-size:calc(9px*var(--fs));font-weight:700;color:#fff;display:inline-flex;align-items:center;justify-content:center}
+    .nx-form .w{background:var(--won)}
+    .nx-form .l{background:var(--lost)}
     .nx-venue{font-size:calc(12px*var(--fs));color:var(--text-2);text-align:center;line-height:1.5}
     .nx-venue a{color:var(--accent);font-weight:600}
     .form-chart{display:block;width:100%;height:auto;max-height:calc(110px*var(--fs));margin-top:6px}
@@ -515,8 +530,6 @@ const CA = {
   'PUNTOS': 'PUNTS',
   'DIFERENCIA': 'DIFERÈNCIA',
   'Abrir el pabellón en Google Maps': 'Obre el pavelló a Google Maps',
-  'Descargar los {n} partidos pendientes (.ics)': 'Descarrega els {n} partits pendents (.ics)',
-  '📅 Añadir al calendario': '📅 Afegeix al calendari',
   'Copiar el enlace a este equipo': 'Copia l’enllaç a aquest equip',
   '🔗 Compartir': '🔗 Comparteix',
   'Forma · últimos {n} partidos': 'Forma · últims {n} partits',
@@ -574,10 +587,19 @@ const CA = {
   'Sin resultados para «{q}»': 'Cap resultat per a «{q}»',
   '🔗 Enlace copiado': '🔗 Enllaç copiat',
   'No se pudo copiar el enlace': 'No s’ha pogut copiar l’enllaç',
-  'No hay partidos pendientes con fecha': 'No hi ha partits pendents amb data',
-  'Horario según basquetcatala.cat a {d}; puede cambiar.': 'Horari segons basquetcatala.cat a {d}; pot canviar.',
-  '📅 {n} partido exportado': '📅 {n} partit exportat',
-  '📅 {n} partidos exportados': '📅 {n} partits exportats',
+  'Suscribirse al calendario del equipo': 'Subscriure’s al calendari de l’equip',
+  '📅 Calendario': '📅 Calendari',
+  'Suscríbete y los partidos aparecerán en tu calendario; se actualizan solos cuando cambian horarios o resultados.':
+    'Subscriu-t’hi i els partits apareixeran al teu calendari; s’actualitzen sols quan canvien horaris o resultats.',
+  'Apple / Outlook / otros': 'Apple / Outlook / altres',
+  '⬇ Descargar .ics': '⬇ Descarrega .ics',
+  'La descarga es una copia: no se actualiza.': 'La descàrrega és una còpia: no s’actualitza.',
+  'Ida': 'Anada',
+  'Posición': 'Posició',
+  'Balance': 'Balanç',
+  'Últimos 5': 'Últims 5',
+  'Puntos a favor / partido': 'Punts a favor / partit',
+  'Puntos en contra / partido': 'Punts en contra / partit',
   '⚠ No se pudo cargar el mapa de municipios': '⚠ No s’ha pogut carregar el mapa de municipis',
 };
 const tr = (s, v = {}) => (LANG === 'ca' ? CA[s] ?? s : s).replace(/\{(\w+)\}/g, (_, k) => v[k]);
@@ -1104,6 +1126,7 @@ function teamViewHTML(tid) {
         <div class="nx-teams">${side(next.h)}${fin ? `<span class="nx-score" aria-label="${tr('Resultado {h} a {a}', { h: next.hs, a: next.as })}">${next.hs}-${next.as}</span>` : '<span class="nx-vs">VS</span>'}${side(next.a)}</div>
         <div class="nx-venue">🏟️ ${esc(TEAMS[host].venue)} · ${esc(TEAMS[host].town)} ${tr(host === tid ? '(en casa)' : '(fuera)')}
           ${fin ? '' : `· <a href="${directionsURL(host)}" target="_blank" rel="noopener">${tr('🧭 Cómo llegar')}</a>`}</div>
+        ${fin ? '' : previewHTML(tid, next)}
       </div>`;
   }
 
@@ -1137,9 +1160,10 @@ function teamViewHTML(tid) {
         </div>
         <div class="tc-actions">
           <a class="act" href="${directionsURL(tid)}" target="_blank" rel="noopener" title="${tr('Abrir el pabellón en Google Maps')}">${tr('🧭 Cómo llegar')}</a>
-          <button class="act" onclick="downloadICS('${tid}')" title="${tr('Descargar los {n} partidos pendientes (.ics)', { n: upcoming.filter(m => m.date).length })}">${tr('📅 Añadir al calendario')}</button>
+          <button class="act" onclick="toggleCal()" aria-expanded="false" aria-controls="cal-sub" title="${tr('Suscribirse al calendario del equipo')}">${tr('📅 Calendario')}</button>
           <button class="act" onclick="shareTeam('${tid}')" title="${tr('Copiar el enlace a este equipo')}">${tr('🔗 Compartir')}</button>
         </div>
+        ${calendarHTML(tid)}
       </div>
       <div class="tv-grid">
         <div>
@@ -1164,6 +1188,35 @@ function teamViewHTML(tid) {
       ${lastGameHTML(tid, done)}
       ${playersHTML(tid)}
     </div>`;
+}
+
+// Before a game: the first leg (if already played) and both teams compared, home team on the left
+function previewHTML(tid, next) {
+  const [h, a] = [next.h, next.a], sh = standingOf(h), sa = standingOf(a);
+  const opp = h === tid ? a : h;
+  const firstLeg = matchesOf(tid).filter(m => played(m) && (m.h === opp || m.a === opp)).pop();
+  const form = id => matchesOf(id).filter(played).slice(-5).map(m => outcome(id, m).won);
+  const perGame = (s, k) => s.j ? s[k] / s.j : null;
+  // Each row: label, value per team, and which side is better (lower = better for position / points against)
+  const row = (label, vh, va, fmt, lowerBetter = false) => {
+    const better = vh === null || va === null || vh === va ? 0 : (vh < va) === lowerBetter ? -1 : 1;
+    return `<div class="nx-row"><span${better < 0 ? ' class="nx-best"' : ''}>${vh === null ? '–' : fmt(vh, h)}</span><small>${label}</small><span${better > 0 ? ' class="nx-best"' : ''}>${va === null ? '–' : fmt(va, a)}</span></div>`;
+  };
+  const dots = id => { const f = form(id); return f.length ? `<span class="nx-form">${f.map(w => `<i class="${w ? 'w' : 'l'}">${w ? 'V' : 'D'}</i>`).join('')}</span>` : '–'; };
+  const winPct = s => s.j ? s.w / s.j : null;
+  let legHTML = '';
+  if (firstLeg) {
+    const o = outcome(tid, firstLeg);
+    legHTML = `<div class="nx-leg"><span class="g-res" style="background:${o.won ? 'var(--won)' : 'var(--lost)'}">${o.won ? 'V' : 'D'}</span>
+      ${tr('Ida')} · ${fmtDate(firstLeg.date)}: ${esc(TEAMS[firstLeg.h].name)} <b>${firstLeg.hs}-${firstLeg.as}</b> ${esc(TEAMS[firstLeg.a].name)}</div>`;
+  }
+  return `<div class="nx-preview">${legHTML}
+    ${row(tr('Posición'), sh.pos, sa.pos, x => ord(x), true)}
+    ${row(tr('Balance'), winPct(sh), winPct(sa), (x, id) => { const s = standingOf(id); return `${s.w}-${s.l}`; })}
+    <div class="nx-row"><span>${dots(h)}</span><small>${tr('Últimos 5')}</small><span>${dots(a)}</span></div>
+    ${row(tr('Puntos a favor / partido'), perGame(sh, 'pf'), perGame(sa, 'pf'), x => x.toFixed(1))}
+    ${row(tr('Puntos en contra / partido'), perGame(sh, 'pa'), perGame(sa, 'pa'), x => x.toFixed(1), true)}
+  </div>`;
 }
 
 // Box score of the team's last game, both sides (only stored for that game, when it has a digital scoresheet)
@@ -1551,44 +1604,29 @@ async function shareTeam(tid) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// CALENDAR EXPORT (.ics with the team's pending games)
+// CALENDAR: one .ics per team and language (cal/<lang>/<id>.ics, made by build_data.py).
+// Subscribed calendars refresh on their own when new data is published.
 // ═══════════════════════════════════════════════════════════════
-const ICS_TZ = ['BEGIN:VTIMEZONE', 'TZID:Europe/Madrid',
-  'BEGIN:DAYLIGHT', 'TZOFFSETFROM:+0100', 'TZOFFSETTO:+0200', 'TZNAME:CEST', 'DTSTART:19700329T020000', 'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU', 'END:DAYLIGHT',
-  'BEGIN:STANDARD', 'TZOFFSETFROM:+0200', 'TZOFFSETTO:+0100', 'TZNAME:CET', 'DTSTART:19701025T030000', 'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU', 'END:STANDARD',
-  'END:VTIMEZONE'];
-
-function downloadICS(tid) {
-  const t = TEAMS[tid];
-  const games = pending(tid).filter(m => m.date);
-  if (!games.length) { toast(tr('No hay partidos pendientes con fecha')); return; }
-  const pad = n => String(n).padStart(2, '0');
-  const local = d => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
-  const text = s => String(s).replace(/[\;,]/g, c => '\\' + c).replace(/\n/g, '\\n');
-  // RFC 5545: lines longer than 75 octets are folded (60 chars keeps multi-byte text safe)
-  const fold = line => Array.from(line).reduce((acc, ch, i) => acc + (i && i % 60 === 0 ? '\r\n ' : '') + ch, '');
-  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
-  const events = games.map(m => {
-    const home = TEAMS[m.h], end = new Date(m.date.getTime() + 90 * 60000);
-    return ['BEGIN:VEVENT',
-      `UID:fcbq-${m.h}-${m.a}-${local(m.date)}@cadet-interterritorial`,
-      `DTSTAMP:${stamp}`,
-      `DTSTART;TZID=Europe/Madrid:${local(m.date)}`,
-      `DTEND;TZID=Europe/Madrid:${local(end)}`,
-      `SUMMARY:${text(`🏀 ${home.name} – ${TEAMS[m.a].name}`)}`,
-      `LOCATION:${text([home.venue, home.street, [home.cp, home.town].filter(Boolean).join(' ')].filter(Boolean).join(', '))}`,
-      `DESCRIPTION:${text(`Cadet Interterritorial ${t.gender === 'M' ? 'masculí' : 'femení'} · Grup ${groupNum(t.group)}. ${tr('Horario según basquetcatala.cat a {d}; puede cambiar.', { d: new Date(DATA.scrapedAt).toLocaleDateString(LOCALE()) })}`)}`,
-      'END:VEVENT'];
-  }).flat();
-  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Cadet Interterritorial//ES', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
-    `X-WR-CALNAME:${text(t.name)}`, ...ICS_TZ, ...events, 'END:VCALENDAR'].map(fold).join('\r\n') + '\r\n';
-  const a = Object.assign(document.createElement('a'), {
-    href: URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' })),
-    download: `${norm(t.name).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}.ics`,
-  });
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  toast(tr(games.length > 1 ? '📅 {n} partidos exportados' : '📅 {n} partido exportado', { n: games.length }));
+function calendarHTML(tid) {
+  const url = new URL(`cal/${LANG}/${tid}.ics`, location.href).href;
+  const hosted = /^https?:$/.test(location.protocol);   // webcal / Google need a public URL
+  const webcal = url.replace(/^https?:/, 'webcal:');
+  const file = `${norm(TEAMS[tid].name).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}.ics`;
+  return `<div id="cal-sub" class="cal-sub" hidden>
+    ${hosted ? `<p>${tr('Suscríbete y los partidos aparecerán en tu calendario; se actualizan solos cuando cambian horarios o resultados.')}</p>
+    <div class="cal-links">
+      <a class="act" href="https://calendar.google.com/calendar/render?cid=${encodeURIComponent(webcal)}" target="_blank" rel="noopener">Google Calendar</a>
+      <a class="act" href="${webcal}">${tr('Apple / Outlook / otros')}</a>
+      <a class="act" href="${url}" download="${file}">${tr('⬇ Descargar .ics')}</a>
+    </div>
+    <small>${tr('La descarga es una copia: no se actualiza.')}</small>`
+    : `<div class="cal-links"><a class="act" href="${url}" download="${file}">${tr('⬇ Descargar .ics')}</a></div>`}
+  </div>`;
+}
+function toggleCal() {
+  const box = document.getElementById('cal-sub'), btn = document.querySelector('[aria-controls="cal-sub"]');
+  box.hidden = !box.hidden;
+  btn.setAttribute('aria-expanded', !box.hidden);
 }
 
 applyStaticLang();

@@ -65,11 +65,11 @@ def main():
         print(f'Partidos jugados: {p0} → {p} · equipos: {t0} → {t}')
 
     if opts.push:
-        if not subprocess.run(['git', '-C', str(ROOT), 'diff', '--quiet', '--', 'data']).returncode:
+        if not subprocess.run(['git', '-C', str(ROOT), 'status', '--porcelain', '--', 'data', 'cal'], capture_output=True, text=True).stdout.strip():
             print('Sin cambios en los datos; no hay nada que subir')
             return
         d, m, y = new['scrapedAt'][8:10], new['scrapedAt'][5:7], new['scrapedAt'][:4]
-        for args in (['add', 'data/fcbq_raw.json', 'data/cadet-data.js'],
+        for args in (['add', '-A', 'data/fcbq_raw.json', 'data/cadet-data.js', 'cal'],
                      ['commit', '-q', '-m', f'Actualizar datos al {d}-{m}-{y}'], ['push', '-q']):
             subprocess.run(['git', '-C', str(ROOT), *args], check=True)
         print('Commit y push hechos')
