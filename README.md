@@ -28,7 +28,7 @@ Al pinchar un equipo (en la clasificación, el mapa, el buscador o un partido) l
 - **Forma**: gráfico con la diferencia de puntos de los últimos partidos, racha, balance en casa y fuera, distancia al líder y ranking de ataque y defensa dentro del grupo
 - Últimos resultados y siguientes partidos; al pinchar en un rival se abre su ficha
 - Pabellón con dirección y día y hora habitual de juego en casa
-- **Último partido · por jugador**: box score del último partido jugado (rival, marcador y fecha) con minutos, puntos, tiros de 2 y triples anotados, tiros libres (anotados/intentados y %), faltas y +/−; quien no jugó aparece como «No jugó»
+- **Último partido · por jugador**: box score del último partido jugado (rival, marcador y fecha), del equipo y del rival (lado a lado en escritorio, uno debajo del otro en móvil), con minutos, puntos, tiros de 2 y triples anotados, tiros libres (anotados/intentados y %), faltas y +/−; quien no jugó aparece como «No jugó»
 - **Jugadores**, a todo el ancho: nombre abreviado ("Pol H.") con partidos, minutos (totales y por partido), puntos (totales y por partido), tiros de 2 y triples anotados, tiros libres (anotados/intentados y %), faltas por partido y % de los puntos del equipo, más una fila con el total del equipo
   - Se ordena pulsando cualquier columna (otra vez para invertir); por defecto, por anotación
   - Líderes del equipo: máximo anotador, más triples, mejor en tiros libres (mín. 10 intentos) y más minutos

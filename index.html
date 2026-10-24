@@ -137,6 +137,12 @@
     .pl-table tr:last-child td{border-bottom:none}
     .pl-table .pl-pts{font-weight:700;color:var(--accent)}
     .pl-table .pl-rank{display:inline-block;width:14px;color:var(--text-3);font-size:calc(11px*var(--fs))}
+    .lg-head{border:1px solid var(--border-sub);margin-bottom:8px;padding:6px 10px}
+    .lg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,calc(420px*var(--fs))),1fr));gap:8px}
+    .lg-team{display:flex;align-items:center;gap:8px;padding:6px 0 4px;font-size:calc(12.5px*var(--fs));font-weight:700}
+    .lg-team .lg-name{flex:1;min-width:0}
+    .lg-team.me .lg-name{color:var(--accent)}
+    .lg-team b{font-family:'Bebas Neue',sans-serif;font-size:calc(20px*var(--fs));font-weight:400}
     .pl-note{font-size:calc(11px*var(--fs));color:var(--text-3);margin-top:5px;line-height:1.4}
 
     /* ── ACCESSIBILITY MENU ── */
@@ -957,29 +963,33 @@ function teamViewHTML(tid) {
     </div>`;
 }
 
-// Box score of the team's last game (only stored for that game, when it has a digital scoresheet)
+// Box score of the team's last game, both sides (only stored for that game, when it has a digital scoresheet)
 function lastGameHTML(tid, done) {
   const m = [...done].reverse().find(x => x.bx);
   if (!m) return '';
   const { home, my, their, won } = outcome(tid, m), opp = home ? m.a : m.h;
-  const list = [...m.bx[home ? 'h' : 'a']].sort((a, b) => b.pts - a.pts || b.min - a.min);
-  const sum = f => list.reduce((n, p) => n + f(p), 0);
-  const tl = [sum(p => p.tl[0]), sum(p => p.tl[1])];
   const pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '–';
   const row = p => p.min ? `<tr><td>${esc(p.n)}</td><td>${Math.round(p.min)}</td><td class="pl-pts">${p.pts}</td><td>${p.t2}</td><td>${p.t3}</td>
       <td>${p.tl[0]}/${p.tl[1]}</td><td>${pct(...p.tl)}</td><td>${p.fc}</td><td style="color:${p.pm > 0 ? 'var(--won-text)' : p.pm < 0 ? 'var(--lost-text)' : 'inherit'}">${p.pm > 0 ? '+' : ''}${p.pm}</td></tr>`
     : `<tr><td>${esc(p.n)}</td><td colspan="8" style="color:var(--text-3)">No jugó</td></tr>`;
-  return `<div class="sec">Último partido · por jugador</div>
-    <div class="pl-scroll card">
-      <div class="g-row" style="border:none"><span class="g-res" style="background:${won ? 'var(--won)' : 'var(--lost)'}">${won ? 'V' : 'D'}</span><span style="color:var(--text-3);font-size:calc(11px*var(--fs));width:14px" title="${home ? 'En casa' : 'Fuera'}">${home ? 'vs' : '@'}</span>${badge(opp, 18)}
-        <span class="g-opp link" role="button" tabindex="0" onclick="selectTeam('${opp}')" title="Ver ${esc(TEAMS[opp].name)}">${esc(TEAMS[opp].name)}</span>
-        <span class="g-score">${my}-${their}</span><span class="g-date">${fmtDate(m.date)}</span></div>
+  const table = id => {
+    const list = [...m.bx[id === m.h ? 'h' : 'a']].sort((a, b) => b.pts - a.pts || b.min - a.min);
+    const sum = f => list.reduce((n, p) => n + f(p), 0);
+    const tl = [sum(p => p.tl[0]), sum(p => p.tl[1])];
+    return `<div class="pl-scroll card">
+      <div class="lg-team${id === tid ? ' me' : ''}">${badge(id, 22)}<span class="lg-name${id === tid ? '"' : ` link" role="button" tabindex="0" onclick="selectTeam('${id}')" title="Ver ${esc(TEAMS[id].name)}"`}>${esc(TEAMS[id].name)}</span><b>${sum(p => p.pts)}</b></div>
       <table class="pl-table">
         <thead><tr><th>Jugador</th><th title="Minutos">MIN</th><th title="Puntos">PTS</th><th title="Tiros de 2 anotados">T2</th><th title="Triples anotados">T3</th><th title="Tiros libres anotados / intentados">TL</th><th title="Porcentaje de tiros libres">TL%</th><th title="Faltas cometidas">FC</th><th title="Diferencia de puntos con el jugador en pista">+/−</th></tr></thead>
         <tbody>${list.map(row).join('')}</tbody>
         <tfoot><tr><td>Equipo</td><td></td><td>${sum(p => p.pts)}</td><td>${sum(p => p.t2)}</td><td>${sum(p => p.t3)}</td><td>${tl[0]}/${tl[1]}</td><td>${pct(...tl)}</td><td>${sum(p => p.fc)}</td><td></td></tr></tfoot>
       </table>
-    </div>
+    </div>`;
+  };
+  return `<div class="sec">Último partido · por jugador</div>
+    <div class="card g-row lg-head"><span class="g-res" style="background:${won ? 'var(--won)' : 'var(--lost)'}">${won ? 'V' : 'D'}</span><span style="color:var(--text-3);font-size:calc(11px*var(--fs));width:14px" title="${home ? 'En casa' : 'Fuera'}">${home ? 'vs' : '@'}</span>${badge(opp, 18)}
+      <span class="g-opp link" role="button" tabindex="0" onclick="selectTeam('${opp}')" title="Ver ${esc(TEAMS[opp].name)}">${esc(TEAMS[opp].name)}</span>
+      <span class="g-score">${my}-${their}</span><span class="g-date">${fmtDate(m.date)}</span></div>
+    <div class="lg-grid">${table(tid)}${table(opp)}</div>
     <div class="pl-note">Según el acta digital del partido. Nombres abreviados.</div>`;
 }
 
