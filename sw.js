@@ -2,8 +2,8 @@
 //  · Page and data (same origin): network first, so new data shows up at once; the cache is the fallback.
 //  · Libraries, fonts and the municipalities map (CDNs, versioned URLs): cache first.
 //  · Crests (CloudFront) and the calendars (cal/*.ics) are not cached: offline the badges show initials.
-const VERSION = 'cadet-v1';
-const CORE = ['./', 'index.html', 'data/cadet-data.js', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png'];
+const VERSION = 'cadet-v2';
+const CORE = ['./', 'index.html', 'data/cadet-data.js', 'data/cadet-box.js', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png'];
 const CDN = /^https:\/\/(cdnjs\.cloudflare\.com|cdn\.jsdelivr\.net|fonts\.googleapis\.com|fonts\.gstatic\.com)\//;
 
 self.addEventListener('install', e => {

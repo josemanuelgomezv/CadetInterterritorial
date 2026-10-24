@@ -19,7 +19,7 @@ Una sola página HTML, sin frameworks ni build steps.
 - Interruptor **MASC / FEM**
 - Pestañas por grupo (8 masculinos, 6 femeninos en 2026-27)
 - J, G, P, PF, PC y puntos; al hacer clic en un equipo se selecciona en el mapa
-- **Jornadas**: con el selector *Classificació · Jornades* se ve el grupo jornada a jornada (◀ ▶): resultados, partidos pendientes con fecha y hora, aplazados y quién descansa. Por defecto, la jornada en curso (a partir de 2 días después pasa a la siguiente). La jornada va en la URL (`&jornada=7`)
+- **Jornadas**: con el selector *Classificació · Jornades* se ve el grupo jornada a jornada (◀ ▶): resultados, partidos pendientes con fecha y hora, aplazados y quién descansa. Al pulsar un resultado se abren las estadísticas por jugador de ese partido. Por defecto, la jornada en curso (a partir de 2 días después pasa a la siguiente). La jornada va en la URL (`&jornada=7`)
 
 ### Ficha de equipo
 Al pinchar un equipo (en la clasificación, el mapa, el buscador o un partido) la zona principal muestra **solo ese equipo**:
@@ -29,7 +29,7 @@ Al pinchar un equipo (en la clasificación, el mapa, el buscador o un partido) l
 - **Forma**: gráfico con la diferencia de puntos de los últimos partidos, racha, balance en casa y fuera, distancia al líder y ranking de ataque y defensa dentro del grupo
 - Últimos resultados y siguientes partidos; al pinchar en un rival se abre su ficha
 - Pabellón con dirección y día y hora habitual de juego en casa
-- **Último partido · por jugador**: box score del último partido jugado (rival, marcador y fecha), del equipo y del rival (lado a lado en escritorio, uno debajo del otro en móvil), con minutos, puntos, tiros de 2 y triples anotados, tiros libres (anotados/intentados y %), faltas y +/−; quien no jugó aparece como «No jugó»
+- **Estadísticas por partido**: box score de cualquier partido jugado con acta digital (por defecto el último; se elige en el desplegable o con el botón 📊 de cada resultado), del equipo y del rival (lado a lado en escritorio, uno debajo del otro en móvil), con minutos, puntos, tiros de 2 y triples anotados, tiros libres (anotados/intentados y %), faltas y +/−; quien no jugó aparece como «No jugó»
 - **Jugadores**, a todo el ancho: nombre abreviado ("Pol H.") con partidos, minutos (totales y por partido), puntos (totales y por partido), tiros de 2 y triples anotados, tiros libres (anotados/intentados y %), faltas por partido y % de los puntos del equipo, más una fila con el total del equipo
   - Se ordena pulsando cualquier columna (otra vez para invertir); por defecto, por anotación
   - Líderes del equipo: máximo anotador, más triples, mejor en tiros libres (mín. 10 intentos) y más minutos
@@ -67,6 +67,7 @@ Al pinchar un municipio con varios equipos se muestra la lista para elegir uno; 
 
 ### 📲 App instalable
 - Se puede **instalar en el móvil** o el ordenador como una app (botón **📲 Instal·la** de la cabecera: instala directamente cuando el navegador lo permite y, si no, por ejemplo en iPhone, explica los pasos), con su icono y a pantalla completa
+- **Aviso de datos desactualizados**: si hay partidos que ya se han jugado después de la última actualización y aún no tienen resultado, se avisa junto a la fecha de los datos y, en la ficha del equipo, en «Pendiente de actualizar»
 - **Funciona sin conexión** con los últimos datos vistos: `sw.js` guarda la página, los datos, las librerías, las fuentes y el mapa. La página y los datos se piden primero a la red, así que los datos nuevos aparecen en cuanto se publican; sin conexión se avisa junto a la fecha de los datos y los escudos se ven con las iniciales
 
 ### Otros
@@ -94,7 +95,7 @@ Los datos son una **copia estática** (`data/cadet-data.js`). basquetcatala.cat 
 
 1. Abre <https://www.basquetcatala.cat/> y espera a que pase la verificación de seguridad.
 2. Abre la consola (F12 → **Console**), pega el contenido de [`scripts/extract.js`](scripts/extract.js) y pulsa Enter.
-   Recorre todos los grupos y equipos y el último partido de cada equipo (~4-5 minutos, con pausas para no cargar el servidor) y descarga `fcbq_raw.json`.
+   Recorre todos los grupos y equipos y las actas de los partidos que aún no están publicadas (~4-5 minutos, con pausas para no cargar el servidor; la primera vez, unos 10) y descarga `fcbq_raw.json`.
 3. Genera los datos de la página (y, con `--push`, haz commit y push):
 
    ```bash
@@ -118,6 +119,8 @@ cal/
   ca/<id>.ics, es/<id>.ics  Calendario de cada equipo (generado)
 data/
   cadet-data.js         Datos que usa la página (generado)
+  cadet-box.js          Estadísticas por jugador de cada partido; se cargan después de la página (generado)
+  fcbq_box.json         Estadísticas por partido acumuladas (las de partidos ya bajados no se vuelven a pedir)
   fcbq_raw.json         Datos extraídos de basquetcatala.cat
 scripts/
   extract.js            Extractor para la consola del navegador

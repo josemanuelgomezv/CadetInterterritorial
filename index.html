@@ -208,6 +208,14 @@
     #data-note{font-size:calc(11px*var(--fs));color:var(--text-3);padding:6px 10px;border-bottom:1px solid var(--border);background:var(--bg-left-tab)}
     #standings-scroll{flex:1;overflow-y:auto}
     @media (min-width:769px){ #standings-scroll{overflow:visible} }
+    #data-note .stale{color:var(--lost-text);font-weight:700}
+    .stale-txt{font-size:calc(12px*var(--fs));color:var(--lost-text);padding:4px 0 2px;line-height:1.4}
+    .r-stale{color:var(--lost-text)!important}
+    .bx-btn{border:1px solid var(--border);background:var(--bg-card);border-radius:6px;cursor:pointer;font-size:calc(11px*var(--fs));padding:1px 5px;line-height:1.4;flex-shrink:0}
+    .bx-btn:hover{border-color:var(--accent)}
+    button.r-score{border:none;background:none;color:inherit;cursor:pointer;padding:0;border-bottom:1px dashed var(--text-3);line-height:1.1}
+    button.r-score:hover{color:var(--accent);border-color:var(--accent)}
+    .lg-sel{width:100%;margin-bottom:8px;padding:6px 8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text);font:inherit;font-size:calc(12.5px*var(--fs))}
     #data-note.offline::after{content:' · ⚠ ' attr(data-offline);color:var(--lost-text);font-weight:700}
     .grp-label{display:flex;align-items:center;gap:6px;font-size:calc(11px*var(--fs));font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:10px 10px 6px}
     .view-sw{margin-left:auto;display:inline-flex;border:1px solid var(--border);border-radius:14px;overflow:hidden;text-transform:none;letter-spacing:0;flex-shrink:0}
@@ -593,7 +601,15 @@ const CA = {
   'Porcentaje de tiros libres': 'Percentatge de tirs lliures',
   'Faltas cometidas': 'Faltes comeses',
   'Diferencia de puntos con el jugador en pista': 'Diferència de punts amb el jugador a pista',
-  'Último partido · por jugador': 'Últim partit · per jugador',
+  'Estadísticas por partido': 'Estadístiques per partit',
+  'Partido': 'Partit',
+  '📊 Estadísticas del partido': '📊 Estadístiques del partit',
+  'Ver las estadísticas por jugador de este partido': 'Veure les estadístiques per jugador d’aquest partit',
+  'Falta 1 resultado: un partido ya jugado después de la última actualización': 'Falta 1 resultat: un partit ja jugat després de l’última actualització',
+  'Faltan {n} resultados: partidos ya jugados después de la última actualización': 'Falten {n} resultats: partits ja jugats després de l’última actualització',
+  'Pendiente de actualizar': 'Pendent d’actualitzar',
+  'Estos partidos ya se han jugado, pero los datos son del {d}: el resultado saldrá en la próxima actualización.': 'Aquests partits ja s’han jugat, però les dades són del {d}: el resultat sortirà a la propera actualització.',
+  'Sin resultado aún': 'Encara sense resultat',
   'Según el acta digital del partido. Nombres abreviados.': 'Segons l’acta digital del partit. Noms abreujats.',
   'Partidos jugados': 'Partits jugats',
   'Minutos totales': 'Minuts totals',
@@ -683,9 +699,11 @@ function applyStaticLang() {
   lt.title = LANG === 'ca' ? 'Cambiar a castellano' : 'Canvia a català';
   lt.lang = LANG === 'ca' ? 'es' : 'ca';
   document.getElementById('data-note').dataset.offline = tr('sin conexión');
-  document.getElementById('data-note').textContent = tr('Datos de basquetcatala.cat a {d} · copia estática',
-    { d: new Date(DATA.scrapedAt).toLocaleDateString(LOCALE(), { day:'numeric', month:'long', year:'numeric' }) });
+  const late = DATA.groups.flatMap(g => g.matches).filter(m => isOverdue({ ...m, date: parseDate(m.dt) })).length;
+  document.getElementById('data-note').innerHTML = esc(tr('Datos de basquetcatala.cat a {d} · copia estática', { d: scrapedDay() }))
+    + (late ? ` · <span class="stale">⚠ ${esc(tr(late === 1 ? 'Falta 1 resultado: un partido ya jugado después de la última actualización' : 'Faltan {n} resultados: partidos ya jugados después de la última actualización', { n: late }))}</span>` : '');
 }
+const scrapedDay = () => new Date(DATA.scrapedAt).toLocaleDateString(LOCALE(), { day:'numeric', month:'long', year:'numeric' });
 function setLang(l) {
   LANG = l;
   try { localStorage.setItem(LANG_KEY, l); } catch (e) {}
@@ -741,6 +759,8 @@ function matchesOf(tid) {
     .sort((a, b) => (a.date || Infinity) - (b.date || Infinity));
 }
 const played = m => m.hs !== null && m.hs !== undefined;
+// Stale data: a game that started (+2 h) after the last update and has no result in the data yet
+const isOverdue = m => !played(m) && m.st !== 'ajornat' && m.date && m.date > new Date(DATA.scrapedAt) && m.date.getTime() + 2 * 36e5 < Date.now();
 const today = () => new Date(new Date().toDateString());
 const pending = tid => matchesOf(tid).filter(m => !played(m) && (!m.date || m.date >= today()));
 // Accent- and case-insensitive text for search
@@ -934,8 +954,9 @@ function roundsHTML(g) {
       ${home ? '' : badge(id, 20)}<span class="nm">${isFav(id) ? '<span class="s-fav">★</span>' : ''}${esc(TEAMS[id].name)}</span>${home ? badge(id, 20) : ''}</span>`;
   };
   const row = m => `<div class="r-row">${side(m.h, m, true)}
-    <span class="r-mid">${played(m) ? `<b class="r-score">${m.hs}-${m.as}</b><small>${fmtDate(m.date)}</small>`
+    <span class="r-mid">${played(m) ? `${m.bx ? `<button class="r-score" onclick="openBox('${m.h}', '${m.h}-${m.a}')" title="${tr('Ver las estadísticas por jugador de este partido')}">${m.hs}-${m.as}</button>` : `<b class="r-score">${m.hs}-${m.as}</b>`}<small>${fmtDate(m.date)}</small>`
       : m.st === 'ajornat' ? `<small>${tr('Aplazado')}</small>`
+      : isOverdue(m) ? `<small>${fmtDate(m.date)}</small><small class="r-stale">${tr('Sin resultado aún')}</small>`
       : m.date ? `<small>${fmtDate(m.date)}</small><b class="r-time">${fmtTime(m.date)}</b>` : `<small>${tr('Sin fecha')}</small>`}</span>
     ${side(m.a, m, false)}</div>`;
   return `<div class="r-nav">
@@ -1132,7 +1153,9 @@ function selectMuni(m, tid = null) {
 }
 
 // opts.zoom: centre the map on the team's town (used by search)
+// opts.box: key ("home-away") of the game whose per-player stats are shown
 function selectTeam(tid, opts = {}) {
+  boxGame = opts.box || null;
   if (TEAMS[tid].gender !== gender) setGender(TEAMS[tid].gender, false);
   currentGroup = TEAMS[tid].group;
   buildGroupTabs();
@@ -1198,7 +1221,7 @@ function matchRow(tid, m, isNext, cls = '') {
   const res = isNext ? '' : `<span class="g-res" style="background:${my > their ? 'var(--won)' : 'var(--lost)'}">${my > their ? 'V' : 'D'}</span>`;
   return `<div class="g-row ${cls}">${res}<span style="color:var(--text-3);font-size:calc(11px*var(--fs));width:14px" title="${tr(home ? 'En casa' : 'Fuera')}">${home ? 'vs' : '@'}</span>${badge(opp, 18)}
     <span class="g-opp link" role="button" tabindex="0" onclick="selectTeam('${opp}')" title="${tr('Ver {name}', { name: esc(TEAMS[opp].name) })}">${esc(TEAMS[opp].name)}</span>
-    ${isNext ? `<span class="g-date">${fmtDate(m.date)}${m.date ? ' · ' + fmtTime(m.date) : ''}</span>` : `<span class="g-score">${my}-${their}</span><span class="g-date">${fmtDate(m.date)}</span>`}</div>`;
+    ${isNext ? `<span class="g-date">${fmtDate(m.date)}${m.date ? ' · ' + fmtTime(m.date) : ''}</span>` : `<span class="g-score">${my}-${their}</span><span class="g-date">${fmtDate(m.date)}</span>`}${m.bx ? `<button class="bx-btn" onclick="showBox('${m.h}-${m.a}')" title="${tr('Ver las estadísticas por jugador de este partido')}" aria-label="${tr('📊 Estadísticas del partido')}">📊</button>` : ''}</div>`;
 }
 
 const outcome = (tid, m) => { const home = m.h === tid, my = home ? m.hs : m.as, their = home ? m.as : m.hs; return { home, my, their, won: my > their, diff: my - their }; };
@@ -1247,6 +1270,10 @@ function teamViewHTML(tid) {
     done.length ? tr('En casa {h} · fuera {a}', { h: rec(true), a: rec(false) }) : '',
   ].filter(Boolean);
 
+  const late = ms.filter(isOverdue);
+  const lateHTML = late.length ? `<div class="sec">${tr('Pendiente de actualizar')}</div><div class="card tv-box">
+      <div class="stale-txt">⚠ ${tr('Estos partidos ya se han jugado, pero los datos son del {d}: el resultado saldrá en la próxima actualización.', { d: scrapedDay() })}</div>
+      ${late.map(m => matchRow(tid, m, true)).join('')}</div>` : '';
   let nextHTML = '';
   if (next) {
     const host = next.h, days = next.date ? Math.round((new Date(next.date.toDateString()) - today()) / 864e5) : null;
@@ -1300,6 +1327,7 @@ function teamViewHTML(tid) {
       </div>
       <div class="tv-grid">
         <div>
+          ${lateHTML}
           ${nextHTML}
           ${done.length ? `<div class="sec">${tr('Forma · últimos {n} partidos', { n: done.slice(-10).length })}</div><div class="card tv-box">${formChart(tid, done.slice(-10))}
             <ul class="facts">${facts.map(f => `<li>${f}</li>`).join('')}</ul></div>` : ''}
@@ -1318,7 +1346,7 @@ function teamViewHTML(tid) {
           ${others.length ? `<div class="sec">${tr('También en {town}', { town: esc(t.town) })}</div>${others.map(id => { const o = standingOf(id); return `<div class="card e-card" onclick="selectTeam('${id}')" role="button" tabindex="0">${badge(id, 26)}<div class="e-main"><div class="e-name">${esc(TEAMS[id].name)}</div><div class="e-sub">Grup ${groupNum(o.gid)} · ${ord(o.pos)} · ${o.w}-${o.l}</div></div></div>`; }).join('')}` : ''}
         </div>
       </div>
-      ${lastGameHTML(tid, done)}
+      ${boxHTML(tid, done)}
       ${playersHTML(tid)}
     </div>`;
 }
@@ -1352,10 +1380,13 @@ function previewHTML(tid, next) {
   </div>`;
 }
 
-// Box score of the team's last game, both sides (only stored for that game, when it has a digital scoresheet)
-function lastGameHTML(tid, done) {
-  const m = [...done].reverse().find(x => x.bx);
-  if (!m) return '';
+// Per-player stats of one game, both sides: the last one, or the one picked (boxGame).
+// They come from data/cadet-box.js, loaded after the page (loadBox); games without a digital scoresheet have none.
+let boxGame = null;
+function boxHTML(tid, done) {
+  const games = done.filter(x => x.bx);
+  if (!games.length) return `<div id="lg-box" data-tid="${tid}"></div>`;
+  const m = games.find(x => `${x.h}-${x.a}` === boxGame) || games[games.length - 1];
   const { home, my, their, won } = outcome(tid, m), opp = home ? m.a : m.h;
   const pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '–';
   const row = p => p.min ? `<tr><td>${esc(p.n)}</td><td>${Math.round(p.min)}</td><td class="pl-pts">${p.pts}</td><td>${p.t2}</td><td>${p.t3}</td>
@@ -1374,12 +1405,40 @@ function lastGameHTML(tid, done) {
       </table>
     </div>`;
   };
-  return `<div class="sec">${tr('Último partido · por jugador')}</div>
+  const label = x => { const o = outcome(tid, x); return `${fmtDate(x.date)} · ${o.home ? 'vs' : '@'} ${TEAMS[o.home ? x.a : x.h].name} · ${o.my}-${o.their} ${o.won ? 'V' : 'D'}`; };
+  return `<div id="lg-box" data-tid="${tid}"><div class="sec">${tr('Estadísticas por partido')}</div>
+    ${games.length > 1 ? `<select class="lg-sel" onchange="showBox(this.value, false)" aria-label="${tr('Partido')}">${[...games].reverse().map(x => `<option value="${x.h}-${x.a}"${x === m ? ' selected' : ''}>${esc(label(x))}</option>`).join('')}</select>` : ''}
     <div class="card g-row lg-head"><span class="g-res" style="background:${won ? 'var(--won)' : 'var(--lost)'}">${won ? 'V' : 'D'}</span><span style="color:var(--text-3);font-size:calc(11px*var(--fs));width:14px" title="${tr(home ? 'En casa' : 'Fuera')}">${home ? 'vs' : '@'}</span>${badge(opp, 18)}
       <span class="g-opp link" role="button" tabindex="0" onclick="selectTeam('${opp}')" title="${tr('Ver {name}', { name: esc(TEAMS[opp].name) })}">${esc(TEAMS[opp].name)}</span>
       <span class="g-score">${my}-${their}</span><span class="g-date">${fmtDate(m.date)}</span></div>
     <div class="lg-grid">${table(tid)}${table(opp)}</div>
-    <div class="pl-note">${tr('Según el acta digital del partido. Nombres abreviados.')}</div>`;
+    <div class="pl-note">${tr('Según el acta digital del partido. Nombres abreviados.')}</div></div>`;
+}
+// Show another game in the per-game stats (scroll: from a results row, bring the stats into view)
+function showBox(key, scroll = true) {
+  boxGame = key;
+  const el = document.getElementById('lg-box');
+  if (!el) return;
+  el.outerHTML = boxHTML(el.dataset.tid, matchesOf(el.dataset.tid).filter(played));
+  if (scroll) document.getElementById('lg-box').scrollIntoView({ block: 'start', behavior: motionMs(1) ? 'smooth' : 'auto' });
+  else document.querySelector('#lg-box .lg-sel')?.focus();
+}
+// From the rounds view: open the home team with that game's stats
+function openBox(tid, key) {
+  selectTeam(tid, { box: key });
+  requestAnimationFrame(() => document.getElementById('lg-box')?.scrollIntoView({ block: 'start' }));
+}
+// data/cadet-box.js is big (every game, every player): it loads after the page is up
+function loadBox() {
+  const el = Object.assign(document.createElement('script'), { src: 'data/cadet-box.js', async: true });
+  el.onload = () => {
+    const box = window.FCBQ_BOX || {};
+    for (const g of DATA.groups) for (const m of g.matches) if (m.sid && box[m.sid]) m.bx = box[m.sid];
+    if (standingsView === 'rounds') buildStandings();
+    if (focusTeam) { const p = document.getElementById('panel'), top = p.scrollTop; buildPanel(); p.scrollTop = top; }
+  };
+  el.onerror = () => console.warn('No se pudieron cargar las estadísticas por partido (data/cadet-box.js)');
+  document.head.appendChild(el);
 }
 
 // Players: abbreviated names ("Pol H.") and their stats, best scorers first.
@@ -1776,6 +1835,7 @@ buildGroupTabs(); buildStandings(); buildPanel();
 if (location.hash) applyURL();
 history.replaceState(null, '', stateHash());
 window.addEventListener('hashchange', applyURL);
+loadBox();
 
 // ── Installable app: offline cache (sw.js) and the "Instal·la" button ──
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol))

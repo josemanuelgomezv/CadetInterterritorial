@@ -4,11 +4,12 @@
 //   1. Abre https://www.basquetcatala.cat/ en el navegador y espera a que pase la
 //      verificación de seguridad.
 //   2. Abre la consola (F12 → Console), pega este archivo entero y pulsa Enter.
-//   3. Al terminar (~4-5 min) el navegador descarga `fcbq_raw.json`.
+//   3. Al terminar (~4-5 min; la primera vez, o tras muchas jornadas, algo más) el navegador
+//      descarga `fcbq_raw.json`.
 //      Después ejecuta: python3 scripts/update.py (ver README.md)
 //
 // Solo guarda datos deportivos (grupos, clasificaciones, partidos, pabellón, horario, escudo
-// del club y estadísticas de jugadores, de la temporada y del último partido de cada equipo,
+// del club y estadísticas de jugadores, de la temporada y de cada partido,
 // con el nombre abreviado: "Pol H.").
 // NO guarda los datos de contacto del responsable de club que muestran las fichas de
 // equipo, ni nombres completos, fotos u otros datos de los jugadores (son menores).
@@ -18,6 +19,8 @@
   const SEASON = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
   const TERRITORIAL_CATALUNYA = 1;
   const DELAY = 300; // ms entre peticiones, para no cargar el servidor
+  // Estadísticas por partido ya publicadas en la web de la app (solo se bajan las que faltan)
+  const PUBLISHED_BOX = 'https://josemanuelgomezv.github.io/CadetInterterritorial/data/fcbq_box.json';
 
   const wait = ms => new Promise(r => setTimeout(r, ms));
   const html = async url => {
@@ -174,7 +177,7 @@
     }
   }));
 
-  // Box score del último partido jugado de cada equipo, por jugador (nombre abreviado).
+  // Box score de cada partido, por jugador (nombre abreviado).
   // Como las estadísticas de equipo, la página se pinta en el navegador: iframe oculto,
   // pestaña "Estadístiques" y lectura del texto. Se guarda en el partido: m.bx = { h: [...], a: [...] }
   // Cabecera "# JUGADOR/A MIN PTS T2C T3C TLC TLI TL% FC +/−"; por jugador: dorsal, nombre,
@@ -218,15 +221,14 @@
       return last;
     } finally { f.remove(); }
   };
-  const lastMatches = new Set();
-  for (const id of ids) {
-    const g = data.groups.find(g => g.standings.some(s => s.id === id));
-    const mine = g.matches.filter(m => (m.h === id || m.a === id) && m.hs !== null && m.dt);
-    const dkey = m => m.dt.replace(/^(\d\d)-(\d\d)-(\d{4})/, '$3$2$1');
-    const last = mine.sort((a, b) => dkey(a) < dkey(b) ? -1 : 1).pop();
-    if (last?.sid) lastMatches.add(last);
-  }
-  const boxQueue = [...lastMatches];
+  // Todos los partidos jugados con acta digital, menos los que ya están publicados
+  // (un partido acabado no cambia): la primera vez tarda más, luego solo los nuevos
+  let known = new Set();
+  try { known = new Set(Object.keys(await (await fetch(PUBLISHED_BOX, { cache: 'no-store' })).json())); }
+  catch (e) { console.warn('[cadet] no se pueden leer las estadísticas publicadas; se bajan todas:', e.message); }
+  const pendingBox = data.groups.flatMap(g => g.matches).filter(m => m.hs !== null && m.sid && !known.has(m.sid));
+  log(`  box scores: ${known.size} ya publicados, ${pendingBox.length} por bajar`);
+  const boxQueue = [...pendingBox];
   let boxDone = 0;
   await Promise.all([1, 2, 3].map(async () => {
     for (let m; (m = boxQueue.shift());) {
@@ -237,10 +239,11 @@
         const [h, a] = r[0].total === m.as && r[1].total === m.hs && m.hs !== m.as ? [r[1], r[0]] : r;
         m.bx = { h: h.players, a: a.players };
       } catch (e) { console.warn('[cadet] sin box score:', m.dt, e.message); }
-      if (++boxDone % 10 === 0) log(`  box scores: ${boxDone}/${lastMatches.size} partidos`);
+      if (++boxDone % 10 === 0) log(`  box scores: ${boxDone}/${pendingBox.length} partidos`);
     }
   }));
 
+  window.__cadetData = data;   // por si falla la descarga: copy(JSON.stringify(__cadetData)) en la consola
   const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
   const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'fcbq_raw.json' });
   document.body.appendChild(a); a.click(); a.remove();

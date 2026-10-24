@@ -8,6 +8,11 @@ Genera también un calendario por equipo e idioma (cal/ca/<id>.ics, cal/es/<id>.
 para suscribirse desde Google Calendar, Apple, Outlook…: al publicar datos nuevos,
 los calendarios suscritos se actualizan solos.
 
+Las estadísticas por jugador de cada partido (box scores) van aparte, en
+data/cadet-box.js, que la página carga sin bloquear el arranque. Se acumulan en
+data/fcbq_box.json: un partido acabado no cambia, así que extract.js solo baja
+las de los partidos que aún no están publicadas.
+
 Uso: python3 scripts/build_data.py
 """
 import json
@@ -21,6 +26,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 RAW = ROOT / 'data' / 'fcbq_raw.json'
 OUT = ROOT / 'data' / 'cadet-data.js'
+BOX = ROOT / 'data' / 'fcbq_box.json'
+BOX_OUT = ROOT / 'data' / 'cadet-box.js'
 CAL = ROOT / 'cal'
 ATLAS_URL = 'https://cdn.jsdelivr.net/npm/es-atlas@0.6.0/es/municipalities.json'
 CAT_PROVINCES = ('08', '17', '25', '43')
@@ -140,6 +147,21 @@ def main():
         t['gender'], t['group'] = group_of[tid]
         teams[tid] = t
 
+    # Box scores: the stored ones plus the new ones, only for games that are still played (by stats id)
+    box = json.loads(BOX.read_text(encoding='utf-8')) if BOX.exists() else {}
+    for g in raw['groups']:
+        for m in g['matches']:
+            # Only if the players' points add up to the score (a 20-0 walkover has an empty scoresheet)
+            if m.get('bx') and m.get('sid') and [sum(p['pts'] for p in m['bx'][k]) for k in 'ha'] == [m['hs'], m['as']]:
+                box[m['sid']] = m['bx']
+            m.pop('bx', None)
+    live = {m['sid'] for g in raw['groups'] for m in g['matches'] if m.get('sid') and m['hs'] is not None}
+    box = {sid: b for sid, b in sorted(box.items()) if sid in live}
+    BOX.write_text(json.dumps(box, ensure_ascii=False, separators=(',', ':')) + '\n', encoding='utf-8')
+    BOX_OUT.write_text(
+        '// Estadísticas por jugador de cada partido (id de estadísticas → {h, a}). Generado por scripts/build_data.py.\n'
+        'window.FCBQ_BOX = ' + json.dumps(box, ensure_ascii=False, separators=(',', ':')) + ';\n', encoding='utf-8')
+
     out = {k: raw[k] for k in ('source', 'season', 'category', 'scrapedAt')}
     out.update(teams=teams, groups=raw['groups'])
     OUT.write_text(
@@ -149,7 +171,8 @@ def main():
         encoding='utf-8')
 
     write_calendars(teams, raw['groups'], raw['scrapedAt'])
-    print(f'{OUT.relative_to(ROOT)}: {len(teams)} equipos, {len(raw["groups"])} grupos (datos del {raw["scrapedAt"][:10]})')
+    print(f'{OUT.relative_to(ROOT)}: {len(teams)} equipos, {len(raw["groups"])} grupos (datos del {raw["scrapedAt"][:10]}), '
+          f'{len(box)} de {len(live)} partidos con estadísticas por jugador')
     if unmatched:
         print('⚠ Equipos sin municipio en el mapa:', *unmatched, sep='\n  ', file=sys.stderr)
 

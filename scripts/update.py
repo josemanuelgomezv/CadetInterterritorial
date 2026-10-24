@@ -69,7 +69,7 @@ def main():
             print('Sin cambios en los datos; no hay nada que subir')
             return
         d, m, y = new['scrapedAt'][8:10], new['scrapedAt'][5:7], new['scrapedAt'][:4]
-        for args in (['add', '-A', 'data/fcbq_raw.json', 'data/cadet-data.js', 'cal'],
+        for args in (['add', '-A', 'data/fcbq_raw.json', 'data/cadet-data.js', 'data/fcbq_box.json', 'data/cadet-box.js', 'cal'],
                      ['commit', '-q', '-m', f'Actualizar datos al {d}-{m}-{y}'], ['push', '-q']):
             subprocess.run(['git', '-C', str(ROOT), *args], check=True)
         print('Commit y push hechos')
