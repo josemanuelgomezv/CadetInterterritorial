@@ -196,6 +196,27 @@
     #standings-scroll{flex:1;overflow-y:auto}
     @media (min-width:769px){ #standings-scroll{overflow:visible} }
     .grp-label{display:flex;align-items:center;gap:6px;font-size:calc(11px*var(--fs));font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:10px 10px 6px}
+    .view-sw{margin-left:auto;display:inline-flex;border:1px solid var(--border);border-radius:14px;overflow:hidden;text-transform:none;letter-spacing:0;flex-shrink:0}
+    .view-sw button{border:none;background:transparent;color:var(--text-2);font:600 calc(11px*var(--fs)) 'DM Sans',sans-serif;padding:3px 10px;min-height:26px;cursor:pointer}
+    .view-sw button.on{background:var(--accent);color:var(--bg-card)}
+    .r-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;background:var(--bg-left-head);text-align:center}
+    .r-nav b{display:block;font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:calc(18px*var(--fs));letter-spacing:.5px;line-height:1.1}
+    .r-nav small{font-size:calc(11px*var(--fs));color:var(--text-2)}
+    .r-nav button{width:calc(32px*var(--fs));height:calc(32px*var(--fs));border-radius:50%;border:1px solid var(--border);background:var(--bg-card);color:var(--text-2);cursor:pointer;font-size:calc(11px*var(--fs))}
+    .r-nav button:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+    .r-nav button:disabled{opacity:.35;cursor:default}
+    .r-row{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid var(--border-sub);background:var(--bg-card);font-size:calc(12px*var(--fs))}
+    .r-team{display:flex;align-items:center;gap:6px;min-width:0;cursor:pointer}
+    .r-team.h{justify-content:flex-end;text-align:right}
+    .r-team .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .r-team:hover .nm{text-decoration:underline}
+    .r-team.win{font-weight:700}
+    .r-team.me .nm{color:var(--accent)}
+    .r-mid{text-align:center;min-width:calc(62px*var(--fs));line-height:1.15}
+    .r-mid small{display:block;font-size:calc(10.5px*var(--fs));color:var(--text-3);white-space:nowrap}
+    .r-score{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:calc(18px*var(--fs))}
+    .r-time{font-size:calc(12px*var(--fs))}
+    .r-bye{padding:7px 10px;font-size:calc(11.5px*var(--fs));color:var(--text-3);background:var(--bg-card);border-bottom:1px solid var(--border-sub)}
     .grp-dot{width:9px;height:9px;border-radius:50%}
     .s-head,.s-row{display:grid;grid-template-columns:calc(22px*var(--fs)) calc(26px*var(--fs)) minmax(0,1fr) calc(24px*var(--fs)) calc(24px*var(--fs)) calc(24px*var(--fs)) calc(36px*var(--fs)) calc(36px*var(--fs)) calc(32px*var(--fs));align-items:center;gap:4px;padding:0 10px}
     .s-head{font-size:calc(11px*var(--fs));font-weight:700;color:var(--text-2);background:var(--bg-left-head);padding-top:5px;padding-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
@@ -600,6 +621,13 @@ const CA = {
   'Últimos 5': 'Últims 5',
   'Puntos a favor / partido': 'Punts a favor / partit',
   'Puntos en contra / partido': 'Punts en contra / partit',
+  'Vista': 'Vista',
+  'Jornadas': 'Jornades',
+  'Jornada {n}': 'Jornada {n}',
+  'Jornada anterior': 'Jornada anterior',
+  'Jornada siguiente': 'Jornada següent',
+  'Descansa: {t}': 'Descansa: {t}',
+  'Aplazado': 'Ajornat',
   '⚠ No se pudo cargar el mapa de municipios': '⚠ No s’ha pogut carregar el mapa de municipis',
 };
 const tr = (s, v = {}) => (LANG === 'ca' ? CA[s] ?? s : s).replace(/\{(\w+)\}/g, (_, k) => v[k]);
@@ -821,6 +849,66 @@ function buildGroupTabs() {
       role="button" tabindex="0" aria-pressed="${g.gid === currentGroup}" aria-label="${tr('Grupo {n}', { n: groupNum(g.gid) })}">${groupNum(g.gid)}</div>`).join('');
 }
 
+// ── Rounds ("jornades") of the group: one at a time, with arrows ──
+let standingsView = 'table';               // 'table' | 'rounds'
+const roundSel = { gid: null, j: null };   // round chosen by hand, for that group only
+const dayOf = d => new Date(d.toDateString());
+// Usual day of a round: the median date of its games (rescheduled games don't move it)
+function roundDate(ms) {
+  const ds = ms.map(m => parseDate(m.dt)).filter(Boolean).map(dayOf).sort((a, b) => a - b);
+  return ds.length ? ds[Math.floor((ds.length - 1) / 2)] : null;
+}
+const roundsOf = g => [...new Set(g.matches.map(m => m.j))].sort((a, b) => a - b);
+// Default: the last round already started; from 2 days after it, the next one
+function defaultRound(g) {
+  const rs = roundsOf(g), now = today();
+  let cur = rs[0];
+  for (const j of rs) { const d = roundDate(g.matches.filter(m => m.j === j)); if (d && d <= now) cur = j; }
+  const d = roundDate(g.matches.filter(m => m.j === cur));
+  return d && d <= now && now - d >= 2 * 864e5 && rs.includes(cur + 1) ? cur + 1 : cur;
+}
+const shownRound = g => roundSel.gid === g.gid ? roundSel.j : defaultRound(g);
+
+function setStandingsView(v) {
+  standingsView = v;
+  buildStandings();
+  syncURL(false);
+}
+function setRound(j) {
+  roundSel.gid = currentGroup; roundSel.j = j;
+  buildStandings();
+  syncURL(false);
+}
+
+function roundsHTML(g) {
+  const rs = roundsOf(g), j = shownRound(g);
+  const ms = g.matches.filter(m => m.j === j).map(m => ({ ...m, date: parseDate(m.dt) }))
+    .sort((a, b) => (a.date || Infinity) - (b.date || Infinity));
+  // Days of the round (games moved more than 3 days away don't count)
+  const mid = roundDate(ms);
+  const days = ms.map(m => m.date && dayOf(m.date)).filter(d => d && mid && Math.abs(d - mid) <= 3 * 864e5).sort((a, b) => a - b);
+  const when = days.length ? fmtDate(days[0]) + (+days[days.length - 1] !== +days[0] ? ' – ' + fmtDate(days[days.length - 1]) : '') : '';
+  const playing = new Set(ms.flatMap(m => [m.h, m.a]));
+  const rest = g.standings.map(s => s.id).filter(id => !playing.has(id));
+  const side = (id, m, home) => {
+    const won = played(m) && (home ? m.hs > m.as : m.as > m.hs);
+    return `<span class="r-team ${home ? 'h' : 'a'}${won ? ' win' : ''}${id === focusTeam ? ' me' : ''}" role="button" tabindex="0" onclick="selectTeam('${id}')" title="${tr('Ver {name}', { name: esc(TEAMS[id].name) })}">
+      ${home ? '' : badge(id, 20)}<span class="nm">${isFav(id) ? '<span class="s-fav">★</span>' : ''}${esc(TEAMS[id].name)}</span>${home ? badge(id, 20) : ''}</span>`;
+  };
+  const row = m => `<div class="r-row">${side(m.h, m, true)}
+    <span class="r-mid">${played(m) ? `<b class="r-score">${m.hs}-${m.as}</b><small>${fmtDate(m.date)}</small>`
+      : m.st === 'ajornat' ? `<small>${tr('Aplazado')}</small>`
+      : m.date ? `<small>${fmtDate(m.date)}</small><b class="r-time">${fmtTime(m.date)}</b>` : `<small>${tr('Sin fecha')}</small>`}</span>
+    ${side(m.a, m, false)}</div>`;
+  return `<div class="r-nav">
+      <button onclick="setRound(${j - 1})" ${j <= rs[0] ? 'disabled' : ''} aria-label="${tr('Jornada anterior')}">◀</button>
+      <div><b>${tr('Jornada {n}', { n: j })}</b><small>${when}</small></div>
+      <button onclick="setRound(${j + 1})" ${j >= rs[rs.length - 1] ? 'disabled' : ''} aria-label="${tr('Jornada siguiente')}">▶</button>
+    </div>
+    ${ms.map(row).join('')}
+    ${rest.map(id => `<div class="r-bye">${tr('Descansa: {t}', { t: esc(TEAMS[id].name) })}</div>`).join('')}`;
+}
+
 function showGroup(gid) {
   currentGroup = gid;
   buildGroupTabs();
@@ -831,6 +919,14 @@ function showGroup(gid) {
 
 function buildStandings() {
   const g = DATA.groups.find(x => x.gid === currentGroup);
+  const hasRounds = g.matches.some(m => m.j);
+  const label = `<div class="grp-label"><span class="grp-dot" style="background:${groupColor(g.gid)}"></span>${esc(g.name)} · ${gender === 'M' ? 'Masculí' : 'Femení'}
+    ${hasRounds ? `<span class="view-sw" role="group" aria-label="${tr('Vista')}">${[['table', 'Clasificación'], ['rounds', 'Jornadas']].map(([v, l]) =>
+      `<button class="${standingsView === v ? 'on' : ''}" aria-pressed="${standingsView === v}" onclick="setStandingsView('${v}')">${tr(l)}</button>`).join('')}</span>` : ''}</div>`;
+  if (standingsView === 'rounds' && hasRounds) {
+    document.getElementById('standings-scroll').innerHTML = label + roundsHTML(g);
+    return;
+  }
   const rows = g.standings.map((s, i) => {
     const t = TEAMS[s.id];
     return `<div class="s-row${s.id === focusTeam ? ' highlighted' : ''}" data-tid="${s.id}" onclick="selectTeam('${s.id}')" title="${esc(t.name)} · ${esc(t.town)}"
@@ -840,8 +936,7 @@ function buildStandings() {
       <span>${s.j}</span><span>${s.w}</span><span>${s.l}</span><span>${s.pf}</span><span>${s.pa}</span><span class="s-pts">${s.pts}</span>
     </div>`;
   }).join('');
-  document.getElementById('standings-scroll').innerHTML = `
-    <div class="grp-label"><span class="grp-dot" style="background:${groupColor(g.gid)}"></span>${esc(g.name)} · ${gender === 'M' ? 'Masculí' : 'Femení'}</div>
+  document.getElementById('standings-scroll').innerHTML = `${label}
     <div class="s-head"><span>#</span><span></span><span>${tr('Equipo')}</span><span title="${tr('Jugados')}">J</span><span title="${tr('Ganados')}">G</span><span title="${tr('Perdidos')}">P</span><span title="${tr('Puntos a favor')}">PF</span><span title="${tr('Puntos en contra')}">PC</span><span title="${tr('Puntos de clasificación')}">Pts</span></div>
     ${rows}`;
   const hl = document.querySelector('#standings-scroll .highlighted');
@@ -1565,6 +1660,7 @@ let restoringURL = false;
 
 function stateHash() {
   const p = new URLSearchParams({ sexo: gender, grupo: currentGroup });
+  if (standingsView === 'rounds') { const g = DATA.groups.find(x => x.gid === currentGroup); if (g.matches.some(m => m.j)) p.set('jornada', shownRound(g)); }
   if (focusTeam) p.set('equipo', focusTeam);
   else if (selectedMuni) p.set('municipio', selectedMuni);
   return '#' + p;
@@ -1581,7 +1677,9 @@ function applyURL() {
   const p = new URLSearchParams(location.hash.slice(1));
   restoringURL = true;
   try {
-    const g = p.get('sexo'), team = p.get('equipo'), muni = p.get('municipio'), gid = +p.get('grupo');
+    const g = p.get('sexo'), team = p.get('equipo'), muni = p.get('municipio'), gid = +p.get('grupo'), round = +p.get('jornada');
+    standingsView = round ? 'rounds' : 'table';
+    if (round) { roundSel.gid = TEAMS[team]?.group || gid; roundSel.j = round; }
     if (team && TEAMS[team]) { selectTeam(team); return; }
     if ((g === 'M' || g === 'F') && g !== gender) setGender(g);
     if (DATA.groups.some(x => x.gid === gid && x.gender === gender)) showGroup(gid);

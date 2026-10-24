@@ -19,6 +19,7 @@ Una sola página HTML, sin frameworks ni build steps.
 - Interruptor **MASC / FEM**
 - Pestañas por grupo (8 masculinos, 6 femeninos en 2026-27)
 - J, G, P, PF, PC y puntos; al hacer clic en un equipo se selecciona en el mapa
+- **Jornadas**: con el selector *Classificació · Jornades* se ve el grupo jornada a jornada (◀ ▶): resultados, partidos pendientes con fecha y hora, aplazados y quién descansa. Por defecto, la jornada en curso (a partir de 2 días después pasa a la siguiente). La jornada va en la URL (`&jornada=7`)
 
 ### Ficha de equipo
 Al pinchar un equipo (en la clasificación, el mapa, el buscador o un partido) la zona principal muestra **solo ese equipo**:
@@ -113,7 +114,7 @@ data/
   fcbq_raw.json         Datos extraídos de basquetcatala.cat
 scripts/
   extract.js            Extractor para la consola del navegador
-  build_data.py         fcbq_raw.json → cadet-data.js (asigna municipio a cada equipo) y calendarios de cal/
+  build_data.py         fcbq_raw.json → cadet-data.js (asigna municipio y jornada) y calendarios de cal/
   update.py             Descargas → data/, regenera los datos y opcionalmente commit + push
 ```
 

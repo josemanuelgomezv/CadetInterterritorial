@@ -112,6 +112,20 @@ def main():
             munis.setdefault(norm(g['properties']['name']), []).append(g['id'])
 
     group_of = {s['id']: (g['gender'], g['gid']) for g in raw['groups'] for s in g['standings']}
+
+    # Round ("jornada") of each game: the federation lists the games round by round, n/2 per round
+    # (one team rests when n is odd). Checked: a team can't play twice in the same round.
+    for g in raw['groups']:
+        size = len(g['standings']) // 2
+        for i, m in enumerate(g['matches']):
+            m['j'] = i // size + 1
+        rounds = {}
+        for m in g['matches']:
+            rounds.setdefault(m['j'], []).extend((m['h'], m['a']))
+        if any(len(ids) != len(set(ids)) for ids in rounds.values()):
+            print(f"⚠ {g['name']} ({g['gid']}): las jornadas no cuadran; se omiten", file=sys.stderr)
+            for m in g['matches']:
+                m.pop('j')
     teams, unmatched = {}, []
     for tid, t in raw['teams'].items():
         t = dict(t, name=re.sub(r'\s+', ' ', t['name']).strip())
