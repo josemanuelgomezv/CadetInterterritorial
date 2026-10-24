@@ -4,11 +4,12 @@
 //   1. Abre https://www.basquetcatala.cat/ en el navegador y espera a que pase la
 //      verificación de seguridad.
 //   2. Abre la consola (F12 → Console), pega este archivo entero y pulsa Enter.
-//   3. Al terminar (~3-4 min) el navegador descarga `fcbq_raw.json`.
-//      Muévelo a data/fcbq_raw.json y ejecuta: python3 scripts/build_data.py
+//   3. Al terminar (~4-5 min) el navegador descarga `fcbq_raw.json`.
+//      Después ejecuta: python3 scripts/update.py (ver README.md)
 //
 // Solo guarda datos deportivos (grupos, clasificaciones, partidos, pabellón, horario, escudo
-// del club y estadísticas de jugadores con el nombre abreviado: "Pol H.").
+// del club y estadísticas de jugadores, de la temporada y del último partido de cada equipo,
+// con el nombre abreviado: "Pol H.").
 // NO guarda los datos de contacto del responsable de club que muestran las fichas de
 // equipo, ni nombres completos, fotos u otros datos de los jugadores (son menores).
 (async () => {
@@ -67,7 +68,9 @@
         return { h: idOf(t[0]?.getAttribute('href')), a: idOf(t[1]?.getAttribute('href')),
                  dt: lf.find(x => /^\d\d-\d\d-\d{4}( \d\d:\d\d)?$/.test(x)) || '',
                  hs: sc.length >= 2 ? sc[sc.length - 2] : null, as: sc.length >= 2 ? sc[sc.length - 1] : null,
-                 st: /ajornat/i.test(lf.join(' ')) ? 'ajornat' : '' };
+                 st: /ajornat/i.test(lf.join(' ')) ? 'ajornat' : '',
+                 // Id de las estadísticas del partido (solo si tiene acta digital)
+                 sid: (r.querySelector('a[href*="/estadistica/partit/"]')?.getAttribute('href') || '').split('/').pop() };
       });
 
       // Escudos: cada partido lleva el de los dos equipos (versión de 150 px del CDN de la Federació)
@@ -168,6 +171,73 @@
       try { data.teams[id].players = await playersOf(id, data.teams[id].name); }
       catch (e) { data.teams[id].players = []; console.warn('[cadet] sin estadísticas de jugadores:', data.teams[id].name, e.message); }
       if (++done % 10 === 0) log(`  jugadores: ${done}/${ids.length} equipos`);
+    }
+  }));
+
+  // Box score del último partido jugado de cada equipo, por jugador (nombre abreviado).
+  // Como las estadísticas de equipo, la página se pinta en el navegador: iframe oculto,
+  // pestaña "Estadístiques" y lectura del texto. Se guarda en el partido: m.bx = { h: [...], a: [...] }
+  // Cabecera "# JUGADOR/A MIN PTS T2C T3C TLC TLI TL% FC +/−"; por jugador: dorsal, nombre,
+  // "(C)" si es capitán, y los 9 valores
+  const parseBox = text => {
+    const L = text.split('\n').map(s => s.trim()).filter(Boolean);
+    const int = /^\d+$/, SHAPE = [int, int, int, int, int, /^\d+%$/, int, /^[+\-−]?\d+$/];
+    const out = [];
+    for (let h = 0; h < L.length; h++) {
+      if (!(L[h] === '#' && L[h + 1] === 'JUGADOR/A' && L[h + 10] === '+/−')) continue;
+      const players = [];
+      let i = h + 11;
+      for (; i < L.length && L[i] !== 'TOTAL EQUIP'; i++) {
+        if (!/^\d+:\d\d$/.test(L[i]) || !SHAPE.every((re, k) => re.test(L[i + 1 + k]))) continue;
+        const [mm, ss] = L[i].split(':').map(Number), v = L.slice(i + 1, i + 9);
+        players.push({ n: shortName(L[i - 1] === '(C)' ? L[i - 2] : L[i - 1]), min: Math.round((mm + ss / 60) * 10) / 10,
+                       pts: +v[0], t2: +v[1], t3: +v[2], tl: [+v[3], +v[4]], fc: +v[6], pm: +v[7].replace('−', '-') });
+        i += 8;
+      }
+      out.push({ total: +L[i + 2], players });
+      h = i;
+    }
+    return out.length === 2 ? out : null;
+  };
+  const boxOf = async sid => {
+    const f = Object.assign(document.createElement('iframe'), { src: `/estadistica/partit/${sid}` });
+    f.style.cssText = 'position:fixed;left:-10000px;top:0;width:1200px;height:900px;opacity:0;pointer-events:none';
+    document.body.appendChild(f);
+    try {
+      await new Promise((ok, ko) => { f.onload = ok; setTimeout(() => ko(new Error('timeout')), 30000); });
+      let last = null, stable = 0;
+      for (let k = 0; k < 80 && stable < 3; k++) {
+        await wait(250);
+        const doc = f.contentDocument;
+        const tab = [...(doc?.querySelectorAll('button,a,li,span,div') || [])].find(e => !e.children.length && e.textContent.trim() === 'Estadístiques' && !e.closest('a[href]'));
+        if (tab && !last) tab.click();
+        const r = parseBox(doc?.body?.innerText || '');
+        stable = r && last && r[0].players.length === last[0].players.length && r[1].players.length === last[1].players.length ? stable + 1 : 0;
+        last = r;
+      }
+      return last;
+    } finally { f.remove(); }
+  };
+  const lastMatches = new Set();
+  for (const id of ids) {
+    const g = data.groups.find(g => g.standings.some(s => s.id === id));
+    const mine = g.matches.filter(m => (m.h === id || m.a === id) && m.hs !== null && m.dt);
+    const dkey = m => m.dt.replace(/^(\d\d)-(\d\d)-(\d{4})/, '$3$2$1');
+    const last = mine.sort((a, b) => dkey(a) < dkey(b) ? -1 : 1).pop();
+    if (last?.sid) lastMatches.add(last);
+  }
+  const boxQueue = [...lastMatches];
+  let boxDone = 0;
+  await Promise.all([1, 2, 3].map(async () => {
+    for (let m; (m = boxQueue.shift());) {
+      try {
+        const r = await boxOf(m.sid);
+        if (!r) throw new Error('sin estadísticas');
+        // Normalmente local primero; se comprueba con el marcador
+        const [h, a] = r[0].total === m.as && r[1].total === m.hs && m.hs !== m.as ? [r[1], r[0]] : r;
+        m.bx = { h: h.players, a: a.players };
+      } catch (e) { console.warn('[cadet] sin box score:', m.dt, e.message); }
+      if (++boxDone % 10 === 0) log(`  box scores: ${boxDone}/${lastMatches.size} partidos`);
     }
   }));
 

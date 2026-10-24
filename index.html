@@ -863,7 +863,7 @@ function teamViewHTML(tid) {
   const t = TEAMS[tid], s = standingOf(tid), g = groupOfTeam(tid), color = clubColor(tid);
   const ms = matchesOf(tid), done = ms.filter(played), upcoming = pending(tid);
   // Today's match stays as "next" once played, now with its result
-  const nextUp = ms.filter(m => played(m) ? m.date && m.date >= today() : upcoming.includes(m));
+  const nextUp = ms.filter(m => played(m) ? m.date && m.date >= today() : !m.date || m.date >= today());
   const next = nextUp.find(m => m.date) || nextUp[0];
   const others = teamsInMuni(muniOf(tid)).filter(x => x !== tid);
 
@@ -952,8 +952,35 @@ function teamViewHTML(tid) {
           ${others.length ? `<div class="sec">También en ${esc(t.town)}</div>${others.map(id => { const o = standingOf(id); return `<div class="card e-card" onclick="selectTeam('${id}')" role="button" tabindex="0">${badge(id, 26)}<div class="e-main"><div class="e-name">${esc(TEAMS[id].name)}</div><div class="e-sub">Grup ${groupNum(o.gid)} · ${o.pos}º · ${o.w}-${o.l}</div></div></div>`; }).join('')}` : ''}
         </div>
       </div>
+      ${lastGameHTML(tid, done)}
       ${playersHTML(tid)}
     </div>`;
+}
+
+// Box score of the team's last game (only stored for that game, when it has a digital scoresheet)
+function lastGameHTML(tid, done) {
+  const m = [...done].reverse().find(x => x.bx);
+  if (!m) return '';
+  const { home, my, their, won } = outcome(tid, m), opp = home ? m.a : m.h;
+  const list = [...m.bx[home ? 'h' : 'a']].sort((a, b) => b.pts - a.pts || b.min - a.min);
+  const sum = f => list.reduce((n, p) => n + f(p), 0);
+  const tl = [sum(p => p.tl[0]), sum(p => p.tl[1])];
+  const pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '–';
+  const row = p => p.min ? `<tr><td>${esc(p.n)}</td><td>${Math.round(p.min)}</td><td class="pl-pts">${p.pts}</td><td>${p.t2}</td><td>${p.t3}</td>
+      <td>${p.tl[0]}/${p.tl[1]}</td><td>${pct(...p.tl)}</td><td>${p.fc}</td><td style="color:${p.pm > 0 ? 'var(--won-text)' : p.pm < 0 ? 'var(--lost-text)' : 'inherit'}">${p.pm > 0 ? '+' : ''}${p.pm}</td></tr>`
+    : `<tr><td>${esc(p.n)}</td><td colspan="8" style="color:var(--text-3)">No jugó</td></tr>`;
+  return `<div class="sec">Último partido · por jugador</div>
+    <div class="pl-scroll card">
+      <div class="g-row" style="border:none"><span class="g-res" style="background:${won ? 'var(--won)' : 'var(--lost)'}">${won ? 'V' : 'D'}</span><span style="color:var(--text-3);font-size:calc(11px*var(--fs));width:14px" title="${home ? 'En casa' : 'Fuera'}">${home ? 'vs' : '@'}</span>${badge(opp, 18)}
+        <span class="g-opp link" role="button" tabindex="0" onclick="selectTeam('${opp}')" title="Ver ${esc(TEAMS[opp].name)}">${esc(TEAMS[opp].name)}</span>
+        <span class="g-score">${my}-${their}</span><span class="g-date">${fmtDate(m.date)}</span></div>
+      <table class="pl-table">
+        <thead><tr><th>Jugador</th><th title="Minutos">MIN</th><th title="Puntos">PTS</th><th title="Tiros de 2 anotados">T2</th><th title="Triples anotados">T3</th><th title="Tiros libres anotados / intentados">TL</th><th title="Porcentaje de tiros libres">TL%</th><th title="Faltas cometidas">FC</th><th title="Diferencia de puntos con el jugador en pista">+/−</th></tr></thead>
+        <tbody>${list.map(row).join('')}</tbody>
+        <tfoot><tr><td>Equipo</td><td></td><td>${sum(p => p.pts)}</td><td>${sum(p => p.t2)}</td><td>${sum(p => p.t3)}</td><td>${tl[0]}/${tl[1]}</td><td>${pct(...tl)}</td><td>${sum(p => p.fc)}</td><td></td></tr></tfoot>
+      </table>
+    </div>
+    <div class="pl-note">Según el acta digital del partido. Nombres abreviados.</div>`;
 }
 
 // Players: abbreviated names ("Pol H.") and their stats, best scorers first.

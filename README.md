@@ -28,6 +28,7 @@ Al pinchar un equipo (en la clasificación, el mapa, el buscador o un partido) l
 - **Forma**: gráfico con la diferencia de puntos de los últimos partidos, racha, balance en casa y fuera, distancia al líder y ranking de ataque y defensa dentro del grupo
 - Últimos resultados y siguientes partidos; al pinchar en un rival se abre su ficha
 - Pabellón con dirección y día y hora habitual de juego en casa
+- **Último partido · por jugador**: box score del último partido jugado (rival, marcador y fecha) con minutos, puntos, tiros de 2 y triples anotados, tiros libres (anotados/intentados y %), faltas y +/−; quien no jugó aparece como «No jugó»
 - **Jugadores**, a todo el ancho: nombre abreviado ("Pol H.") con partidos, minutos (totales y por partido), puntos (totales y por partido), tiros de 2 y triples anotados, tiros libres (anotados/intentados y %), faltas por partido y % de los puntos del equipo, más una fila con el total del equipo
   - Se ordena pulsando cualquier columna (otra vez para invertir); por defecto, por anotación
   - Líderes del equipo: máximo anotador, más triples, mejor en tiros libres (mín. 10 intentos) y más minutos
@@ -87,12 +88,14 @@ Los datos son una **copia estática** (`data/cadet-data.js`). basquetcatala.cat 
 
 1. Abre <https://www.basquetcatala.cat/> y espera a que pase la verificación de seguridad.
 2. Abre la consola (F12 → **Console**), pega el contenido de [`scripts/extract.js`](scripts/extract.js) y pulsa Enter.
-   Recorre todos los grupos y equipos (~1-2 minutos, con pausas para no cargar el servidor) y descarga `fcbq_raw.json`.
-3. Mueve el archivo a `data/fcbq_raw.json` y genera los datos de la página:
+   Recorre todos los grupos y equipos y el último partido de cada equipo (~4-5 minutos, con pausas para no cargar el servidor) y descarga `fcbq_raw.json`.
+3. Genera los datos de la página (y, con `--push`, haz commit y push):
 
    ```bash
-   python3 scripts/build_data.py
+   python3 scripts/update.py --push
    ```
+
+   Coge el `fcbq_raw*.json` más reciente de la carpeta de descargas (o el que se le pase como argumento), lo copia a `data/fcbq_raw.json`, ejecuta `build_data.py` y muestra cuántos partidos nuevos hay. Sin `--push` solo actualiza los archivos.
 
 El extractor localiza la categoría por su nombre ("Cadet … Interterritorial") en la temporada actual, así que sirve también para temporadas futuras mientras la web mantenga su estructura.
 
@@ -108,6 +111,7 @@ data/
 scripts/
   extract.js            Extractor para la consola del navegador
   build_data.py         fcbq_raw.json → cadet-data.js (asigna municipio a cada equipo)
+  update.py             Descargas → data/, regenera los datos y opcionalmente commit + push
 ```
 
 ## 🛠️ Tecnologías
