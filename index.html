@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="ca">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
@@ -242,6 +242,7 @@
     .e-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .e-sub{font-size:calc(11px*var(--fs));color:var(--text-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .e-stat{font-family:'Bebas Neue',sans-serif;font-size:calc(18px*var(--fs));color:var(--accent)}
+    .ord-suf{font-family:'DM Sans',sans-serif;font-weight:700;font-size:.5em;vertical-align:.7em;margin-left:1px}
     #panel-head{padding:14px 14px 4px}
     #panel-town{font-weight:400;font-family:'Bebas Neue',sans-serif;font-size:calc(26px*var(--fs));letter-spacing:1px;line-height:1}
     #panel-count{font-size:calc(12px*var(--fs));color:var(--text-3);margin-top:2px}
@@ -330,7 +331,7 @@
   </style>
 </head>
 <body>
-<a class="skip-link" href="#standings-scroll">Saltar a la clasificación</a>
+<a class="skip-link" href="#standings-scroll" data-i18n="Saltar a la clasificación">Saltar a la clasificación</a>
 
 <div id="header">
   <div style="display:flex;align-items:center;gap:11px;min-width:0">
@@ -341,31 +342,34 @@
     </div>
   </div>
   <div id="search-wrap">
-    <input id="search" type="search" autocomplete="off" spellcheck="false" placeholder="Buscar equipo, club, municipio o pabellón…"
-      role="combobox" aria-expanded="false" aria-controls="search-results" aria-autocomplete="list" aria-label="Buscar">
+    <input id="search" type="search" autocomplete="off" spellcheck="false" placeholder="Buscar equipo, club, municipio o pabellón…" data-i18n-placeholder="Buscar equipo, club, municipio o pabellón…"
+      role="combobox" aria-expanded="false" aria-controls="search-results" aria-autocomplete="list" aria-label="Buscar" data-i18n-aria-label="Buscar">
     <kbd id="search-key">/</kbd>
     <div id="search-results" role="listbox"></div>
   </div>
   <div class="hdr-right">
-    <button id="gender-toggle" class="pill-btn" onclick="toggleGender()" title="Cambiar entre masculino y femenino">
+    <button id="lang-toggle" class="pill-btn" onclick="setLang(LANG === 'ca' ? 'es' : 'ca')" title="Cambiar a castellano" lang="ca">
+      <span class="opt" id="opt-ca">CA</span><span class="opt" aria-hidden="true">·</span><span class="opt" id="opt-es">ES</span>
+    </button>
+    <button id="gender-toggle" class="pill-btn" onclick="toggleGender()" title="Cambiar entre masculino y femenino" data-i18n-title="Cambiar entre masculino y femenino">
       <span class="opt active" id="opt-M">MASC</span>
       <div class="toggle-track"><div class="toggle-thumb"></div></div>
       <span class="opt" id="opt-F">FEM</span>
     </button>
     <button id="theme-toggle" class="pill-btn" onclick="toggleTheme()" aria-pressed="false"><span id="theme-icon" aria-hidden="true">🌙</span><span class="lbl" id="theme-label">Oscuro</span></button>
     <div id="a11y-wrap">
-      <button id="a11y-btn" class="pill-btn" onclick="toggleA11yMenu()" aria-haspopup="true" aria-expanded="false" aria-controls="a11y-menu" title="Accesibilidad: tamaño de letra, contraste y animaciones">
-        <span aria-hidden="true" style="font-weight:700">Aa</span><span class="lbl">Accesibilidad</span>
+      <button id="a11y-btn" class="pill-btn" onclick="toggleA11yMenu()" aria-haspopup="true" aria-expanded="false" aria-controls="a11y-menu" title="Accesibilidad: tamaño de letra, contraste y animaciones" data-i18n-title="Accesibilidad: tamaño de letra, contraste y animaciones">
+        <span aria-hidden="true" style="font-weight:700">Aa</span><span class="lbl" data-i18n="Accesibilidad">Accesibilidad</span>
       </button>
-      <div id="a11y-menu" role="dialog" aria-label="Opciones de accesibilidad">
-        <h2>Accesibilidad</h2>
-        <div class="a11y-row"><div>Tamaño de letra<small>También funciona el zoom del navegador (Ctrl +)</small></div>
-          <div class="fs-ctrl"><button onclick="stepFont(-1)" aria-label="Reducir letra">A−</button><span id="fs-val" aria-live="polite">100%</span><button onclick="stepFont(1)" aria-label="Aumentar letra">A+</button></div></div>
-        <div class="a11y-row"><div>Alto contraste<small>Fondo negro, texto blanco y amarillo</small></div>
+      <div id="a11y-menu" role="dialog" aria-label="Opciones de accesibilidad" data-i18n-aria-label="Opciones de accesibilidad">
+        <h2 data-i18n="Accesibilidad">Accesibilidad</h2>
+        <div class="a11y-row"><div><span data-i18n="Tamaño de letra">Tamaño de letra</span><small data-i18n="También funciona el zoom del navegador (Ctrl +)">También funciona el zoom del navegador (Ctrl +)</small></div>
+          <div class="fs-ctrl"><button onclick="stepFont(-1)" aria-label="Reducir letra" data-i18n-aria-label="Reducir letra">A−</button><span id="fs-val" aria-live="polite">100%</span><button onclick="stepFont(1)" aria-label="Aumentar letra" data-i18n-aria-label="Aumentar letra">A+</button></div></div>
+        <div class="a11y-row"><div><span data-i18n="Alto contraste">Alto contraste</span><small data-i18n="Fondo negro, texto blanco y amarillo">Fondo negro, texto blanco y amarillo</small></div>
           <button class="sw" id="sw-hc" role="switch" aria-checked="false" onclick="setA11y({ hc: !A11Y.hc })">No</button></div>
-        <div class="a11y-row"><div>Reducir animaciones<small>Sin transiciones ni zoom animado</small></div>
+        <div class="a11y-row"><div><span data-i18n="Reducir animaciones">Reducir animaciones</span><small data-i18n="Sin transiciones ni zoom animado">Sin transiciones ni zoom animado</small></div>
           <button class="sw" id="sw-motion" role="switch" aria-checked="false" onclick="setA11y({ motion: !A11Y.motion })">No</button></div>
-        <button class="a11y-reset" onclick="resetA11y()">Restablecer</button>
+        <button class="a11y-reset" onclick="resetA11y()" data-i18n="Restablecer">Restablecer</button>
       </div>
     </div>
   </div>
@@ -385,22 +389,22 @@
       <button onclick="zoomTo('all')">↺ Catalunya</button>
     </div>
     <div id="map-wrap">
-      <svg id="map-svg" role="group" aria-label="Mapa de Catalunya con los municipios que tienen equipo. Los puntos se pueden recorrer con el tabulador; también puedes usar el buscador o la clasificación."></svg>
+      <svg id="map-svg" role="group" aria-label="Mapa de Catalunya con los municipios que tienen equipo. Los puntos se pueden recorrer con el tabulador; también puedes usar el buscador o la clasificación." data-i18n-aria-label="Mapa de Catalunya con los municipios que tienen equipo. Los puntos se pueden recorrer con el tabulador; también puedes usar el buscador o la clasificación."></svg>
     </div>
     <div id="legend"></div>
     <div id="map-hint" aria-live="polite">Haz clic en un municipio o en un punto para ver sus equipos</div>
   </div>
   </div>
 
-  <div class="splitter" id="split-left" data-side="left" role="separator" aria-orientation="vertical" aria-controls="sidebar" aria-label="Ancho de la clasificación y el mapa" tabindex="0" title="Arrastra para cambiar el ancho · doble clic para restablecer"></div>
+  <div class="splitter" id="split-left" data-side="left" role="separator" aria-orientation="vertical" aria-controls="sidebar" aria-label="Ancho de la clasificación y el mapa" data-i18n-aria-label="Ancho de la clasificación y el mapa" tabindex="0" title="Arrastra para cambiar el ancho · doble clic para restablecer" data-i18n-title="Arrastra para cambiar el ancho · doble clic para restablecer"></div>
 
   <div id="panel"></div>
 </div>
 
 <nav id="bottom-nav">
-  <button class="nav-tab active" data-tab="standings" onclick="switchTab('standings')"><span class="ico">🏆</span>Clasificación</button>
+  <button class="nav-tab active" data-tab="standings" onclick="switchTab('standings')"><span class="ico">🏆</span><span data-i18n="Clasificación">Clasificación</span></button>
   <button class="nav-tab" data-tab="map-area" onclick="switchTab('map-area')"><span class="ico">🗺️</span>Mapa</button>
-  <button class="nav-tab" data-tab="panel" onclick="switchTab('panel')"><span class="ico">🏀</span>Equipo</button>
+  <button class="nav-tab" data-tab="panel" onclick="switchTab('panel')"><span class="ico">🏀</span><span data-i18n="Equipo">Equipo</span></button>
 </nav>
 
 <div id="tooltip"></div>
@@ -416,6 +420,195 @@ const GROUP_COLORS = ['#e4572e','#2e86ab','#e9a23b','#6a4c93','#17a398','#c33c54
 const CAT_PROVINCES = ['08','17','25','43'];
 const ANDORRA = [1.5218, 42.5063];
 const DAYS_ES = { Dilluns:'Lunes', Dimarts:'Martes', Dimecres:'Miércoles', Dijous:'Jueves', Divendres:'Viernes', Dissabte:'Sábado', Diumenge:'Domingo' };
+
+// ── Language: Catalan (default) or Spanish, kept in this browser ──
+// UI strings are written in Spanish and go through tr(); CA holds their Catalan version.
+// Placeholders: tr('En {n} días', { n: 3 })
+const LANG_KEY = 'cadet.lang';
+let LANG = (() => { try { return localStorage.getItem(LANG_KEY) === 'es' ? 'es' : 'ca'; } catch (e) { return 'ca'; } })();
+const CA = {
+  'Saltar a la clasificación': 'Salta a la classificació',
+  'Buscar equipo, club, municipio o pabellón…': 'Cerca equip, club, municipi o pavelló…',
+  'Buscar': 'Cerca',
+  'Cambiar entre masculino y femenino': 'Canvia entre masculí i femení',
+  'Accesibilidad: tamaño de letra, contraste y animaciones': 'Accessibilitat: mida de la lletra, contrast i animacions',
+  'Accesibilidad': 'Accessibilitat',
+  'Opciones de accesibilidad': 'Opcions d’accessibilitat',
+  'Tamaño de letra': 'Mida de la lletra',
+  'También funciona el zoom del navegador (Ctrl +)': 'També funciona el zoom del navegador (Ctrl +)',
+  'Reducir letra': 'Redueix la lletra',
+  'Aumentar letra': 'Augmenta la lletra',
+  'Alto contraste': 'Alt contrast',
+  'Fondo negro, texto blanco y amarillo': 'Fons negre, text blanc i groc',
+  'Reducir animaciones': 'Redueix les animacions',
+  'Sin transiciones ni zoom animado': 'Sense transicions ni zoom animat',
+  'Restablecer': 'Restableix',
+  'Mapa de Catalunya con los municipios que tienen equipo. Los puntos se pueden recorrer con el tabulador; también puedes usar el buscador o la clasificación.':
+    'Mapa de Catalunya amb els municipis que tenen equip. Els punts es poden recórrer amb el tabulador; també pots fer servir el cercador o la classificació.',
+  'Ancho de la clasificación y el mapa': 'Amplada de la classificació i el mapa',
+  'Arrastra para cambiar el ancho · doble clic para restablecer': 'Arrossega per canviar l’amplada · doble clic per restablir-la',
+  'Clasificación': 'Classificació',
+  'Equipo': 'Equip',
+  'Oscuro': 'Fosc',
+  'Claro': 'Clar',
+  'Sin fecha': 'Sense data',
+  'equipo': 'equip',
+  'equipos': 'equips',
+  'punto': 'punt',
+  'puntos': 'punts',
+  'masculino': 'masculí',
+  'masculinos': 'masculins',
+  'femenino': 'femení',
+  'femeninos': 'femenins',
+  '⭐ Añadido a Mis equipos': '⭐ Afegit als Meus equips',
+  'Quitado de Mis equipos': 'Tret dels Meus equips',
+  'Grupo {n}': 'Grup {n}',
+  'Ver grupo {n}': 'Mostra el grup {n}',
+  '{pos} {name}, {town}: {w} ganados, {l} perdidos, {pts} puntos': '{pos} {name}, {town}: {w} guanyats, {l} perduts, {pts} punts',
+  ', mi equipo': ', el meu equip',
+  'Mi equipo': 'El meu equip',
+  'Jugados': 'Jugats',
+  'Ganados': 'Guanyats',
+  'Perdidos': 'Perduts',
+  'Puntos a favor': 'Punts a favor',
+  'Puntos en contra': 'Punts en contra',
+  'Puntos de clasificación': 'Punts de classificació',
+  'Sin equipos cadetes {g}': 'Sense equips cadets {g}',
+  'sin equipos': 'sense equips',
+  'Haz clic en un municipio o en un punto para ver sus equipos': 'Fes clic en un municipi o en un punt per veure’n els equips',
+  '✕ Cerrar': '✕ Tanca',
+  '{n} equipos cadetes {g} · elige uno para ver su ficha': '{n} equips cadets {g} · tria’n un per veure’n la fitxa',
+  '1 equipo cadete {g} · elige uno para ver su ficha': '1 equip cadet {g} · tria’l per veure’n la fitxa',
+  'Ver {name}': 'Veure {name}',
+  '{pos} de {of}': '{pos} de {of}',
+  'Ningún equipo de este municipio juega la Cadet Interterritorial {g}': 'Cap equip d’aquest municipi juga la Cadet Interterritorial {g}',
+  'En casa': 'A casa',
+  'Fuera': 'Fora',
+  'Diferencia de puntos en los últimos {n} partidos: {w} ganados y {l} perdidos': 'Diferència de punts en els últims {n} partits: {w} guanyats i {l} perduts',
+  'Líder, {n} por delante del {second}': 'Líder, {n} per davant del {second}',
+  'Líder del grupo': 'Líder del grup',
+  'Empatado a puntos con el líder': 'Empatat a punts amb el líder',
+  'A {n} del líder': 'A {n} del líder',
+  '{a} mejor ataque y {d} mejor defensa del grupo': '{a} millor atac i {d} millor defensa del grup',
+  'Racha: {n} victorias seguidas': 'Ratxa: {n} victòries seguides',
+  'Racha: 1 victoria seguida': 'Ratxa: 1 victòria seguida',
+  'Racha: {n} derrotas seguidas': 'Ratxa: {n} derrotes seguides',
+  'Racha: 1 derrota seguida': 'Ratxa: 1 derrota seguida',
+  'En casa {h} · fuera {a}': 'A casa {h} · fora {a}',
+  'Final · Victoria': 'Final · Victòria',
+  'Final · Derrota': 'Final · Derrota',
+  'Hoy': 'Avui',
+  'Mañana': 'Demà',
+  'En {n} días': 'D’aquí a {n} dies',
+  ' · aplazado': ' · ajornat',
+  'Próximo partido': 'Proper partit',
+  'Resultado {h} a {a}': 'Resultat {h} a {a}',
+  '(en casa)': '(a casa)',
+  '(fuera)': '(fora)',
+  '🧭 Cómo llegar': '🧭 Com arribar-hi',
+  'Ver todos los equipos de {town}': 'Mostra tots els equips de {town}',
+  '← {n} en {town}': '← {n} a {town}',
+  '{n} jugados': '{n} jugats',
+  'Quitar de Mis equipos': 'Treu dels Meus equips',
+  'Añadir a Mis equipos': 'Afegeix als Meus equips',
+  'POSICIÓN': 'POSICIÓ',
+  'PUNTOS': 'PUNTS',
+  'DIFERENCIA': 'DIFERÈNCIA',
+  'Abrir el pabellón en Google Maps': 'Obre el pavelló a Google Maps',
+  'Descargar los {n} partidos pendientes (.ics)': 'Descarrega els {n} partits pendents (.ics)',
+  '📅 Añadir al calendario': '📅 Afegeix al calendari',
+  'Copiar el enlace a este equipo': 'Copia l’enllaç a aquest equip',
+  '🔗 Compartir': '🔗 Comparteix',
+  'Forma · últimos {n} partidos': 'Forma · últims {n} partits',
+  'Últimos resultados': 'Últims resultats',
+  'Siguientes partidos': 'Següents partits',
+  '📋 Calendario completo · {n} partidos': '📋 Calendari complet · {n} partits',
+  'Pabellón': 'Pavelló',
+  '🕒 Juega en casa:': '🕒 Juga a casa:',
+  'En el grupo': 'Al grup',
+  'También en {town}': 'També a {town}',
+  'No jugó': 'No va jugar',
+  'Jugador': 'Jugador',
+  'Minutos': 'Minuts',
+  'Puntos': 'Punts',
+  'Tiros de 2 anotados': 'Tirs de 2 anotats',
+  'Triples anotados': 'Triples anotats',
+  'Tiros libres anotados / intentados': 'Tirs lliures anotats / intentats',
+  'Porcentaje de tiros libres': 'Percentatge de tirs lliures',
+  'Faltas cometidas': 'Faltes comeses',
+  'Diferencia de puntos con el jugador en pista': 'Diferència de punts amb el jugador a pista',
+  'Último partido · por jugador': 'Últim partit · per jugador',
+  'Según el acta digital del partido. Nombres abreviados.': 'Segons l’acta digital del partit. Noms abreujats.',
+  'Partidos jugados': 'Partits jugats',
+  'Minutos totales': 'Minuts totals',
+  'Minutos por partido': 'Minuts per partit',
+  'Puntos totales': 'Punts totals',
+  'Puntos por partido': 'Punts per partit',
+  'Acierto en tiros libres': 'Encert en tirs lliures',
+  'Faltas cometidas por partido (la Federació las publica redondeadas)': 'Faltes comeses per partit (la Federació les publica arrodonides)',
+  'Porcentaje de los puntos del equipo (según las actas)': 'Percentatge dels punts de l’equip (segons les actes)',
+  'clic para ordenar': 'clic per ordenar',
+  'Máximo anotador': 'Màxim anotador',
+  'Más triples': 'Més triples',
+  'Mejor en tiros libres': 'Millor en tirs lliures',
+  'Más minutos': 'Més minuts',
+  'Orden por defecto': 'Ordre per defecte',
+  'Jugadores · {n}': 'Jugadors · {n}',
+  'Pulsa una columna para ordenar. Según las actas digitales de la Federació, que puede que no incluyan todos los partidos: de los tiros de 2 y triples solo se registran los anotados, y las faltas por partido llegan redondeadas. Nombres abreviados.':
+    'Prem una columna per ordenar. Segons les actes digitals de la Federació, que potser no inclouen tots els partits: dels tirs de 2 i triples només es registren els anotats, i les faltes per partit arriben arrodonides. Noms abreujats.',
+  '🔥 Máximos anotadores': '🔥 Màxims anotadors',
+  'Próximo: {d} · {t} {vs} {opp}': 'Proper: {d} · {t} {vs} {opp}',
+  'Sin partidos pendientes': 'Sense partits pendents',
+  '⭐ Mis equipos': '⭐ Els meus equips',
+  'Selecciona un municipio en el mapa<br>o un equipo de la clasificación': 'Selecciona un municipi al mapa<br>o un equip de la classificació',
+  '<br>· marca con ☆ tus equipos para tenerlos aquí ·': '<br>· marca amb ☆ els teus equips per tenir-los aquí ·',
+  '🏆 Líderes de grupo': '🏆 Líders de grup',
+  '📅 Próximos 7 días': '📅 Propers 7 dies',
+  '📊 Mejores ataques': '📊 Millors atacs',
+  '🛡️ Mejores defensas': '🛡️ Millors defenses',
+  '{town} · puntos/partido': '{town} · punts/partit',
+  '{town} · recibidos/partido': '{town} · rebuts/partit',
+  'Datos de basquetcatala.cat a {d} · copia estática': 'Dades de basquetcatala.cat a {d} · còpia estàtica',
+  'Equipos': 'Equips',
+  'Municipios': 'Municipis',
+  'Sin resultados para «{q}»': 'Cap resultat per a «{q}»',
+  '🔗 Enlace copiado': '🔗 Enllaç copiat',
+  'No se pudo copiar el enlace': 'No s’ha pogut copiar l’enllaç',
+  'No hay partidos pendientes con fecha': 'No hi ha partits pendents amb data',
+  'Horario según basquetcatala.cat a {d}; puede cambiar.': 'Horari segons basquetcatala.cat a {d}; pot canviar.',
+  '📅 {n} partido exportado': '📅 {n} partit exportat',
+  '📅 {n} partidos exportados': '📅 {n} partits exportats',
+  '⚠ No se pudo cargar el mapa de municipios': '⚠ No s’ha pogut carregar el mapa de municipis',
+};
+const tr = (s, v = {}) => (LANG === 'ca' ? CA[s] ?? s : s).replace(/\{(\w+)\}/g, (_, k) => v[k]);
+const LOCALE = () => LANG === 'ca' ? 'ca-ES' : 'es-ES';
+// Ordinals: 1º / 1r, 2n, 3r, 4t, 5è… (fem: 1ª / 1a)
+const ord = n => LANG === 'ca' ? n + ({ 1: 'r', 2: 'n', 3: 'r', 4: 't' }[n] || 'è') : n + 'º';
+const ordF = n => n + (LANG === 'ca' ? 'a' : 'ª');
+// For the big numbers in Bebas Neue (capitals only): the suffix in the body font, raised ("2n", not "2N")
+const ordBig = n => String(ord(n)).replace(/^(\d+)(.*)$/, '$1<span class="ord-suf">$2</span>');
+
+// Static texts of the page: data-i18n (text) and data-i18n-<attr> keep the Spanish key
+function applyStaticLang() {
+  document.documentElement.lang = LANG;
+  for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = tr(el.dataset.i18n);
+  for (const attr of ['title', 'aria-label', 'placeholder'])
+    for (const el of document.querySelectorAll(`[data-i18n-${attr}]`)) el.setAttribute(attr, tr(el.getAttribute(`data-i18n-${attr}`)));
+  document.getElementById('opt-ca').classList.toggle('active', LANG === 'ca');
+  document.getElementById('opt-es').classList.toggle('active', LANG === 'es');
+  const lt = document.getElementById('lang-toggle');
+  lt.title = LANG === 'ca' ? 'Cambiar a castellano' : 'Canvia a català';
+  lt.lang = LANG === 'ca' ? 'es' : 'ca';
+  document.getElementById('data-note').textContent = tr('Datos de basquetcatala.cat a {d} · copia estática',
+    { d: new Date(DATA.scrapedAt).toLocaleDateString(LOCALE(), { day:'numeric', month:'long', year:'numeric' }) });
+}
+function setLang(l) {
+  LANG = l;
+  try { localStorage.setItem(LANG_KEY, l); } catch (e) {}
+  applyStaticLang();
+  applyA11y();   // re-renders standings, panel, map labels and the a11y menu
+  updateMapHint();
+}
 
 let gender = 'M';
 let currentGroup = null;   // gid of the group shown in the standings
@@ -436,8 +629,8 @@ function parseDate(s) {
   const m = /^(\d\d)-(\d\d)-(\d{4})(?: (\d\d):(\d\d))?/.exec(s || '');
   return m ? new Date(+m[3], +m[2] - 1, +m[1], +(m[4] || 0), +(m[5] || 0)) : null;
 }
-const fmtDate = d => d ? d.toLocaleDateString('es-ES', { weekday:'short', day:'numeric', month:'short' }).replace('.', '') : 'Sin fecha';
-const fmtTime = d => d ? d.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' }) : '';
+const fmtDate = d => d ? d.toLocaleDateString(LOCALE(), { weekday:'short', day:'numeric', month:'short' }).replace(/\./g, '') : tr('Sin fecha');
+const fmtTime = d => d ? d.toLocaleTimeString(LOCALE(), { hour:'2-digit', minute:'2-digit' }) : '';
 
 // Club crest from the Federació's CDN (150 px version); the initials badge is the fallback
 const LOGO_BASE = 'https://d3ah0nqesr6vwc.cloudfront.net/recursos/imatges/multimedia/';
@@ -485,7 +678,7 @@ function toggleFav(tid, ev) {
   });
   buildStandings();
   if (!selectedMuni) buildPanel();
-  toast(isFav(tid) ? '⭐ Añadido a Mis equipos' : 'Quitado de Mis equipos');
+  toast(tr(isFav(tid) ? '⭐ Añadido a Mis equipos' : 'Quitado de Mis equipos'));
 }
 
 let toastTimer;
@@ -540,7 +733,7 @@ function applyA11y() {
   document.body.classList.toggle('hc', !!A11Y.hc);
   document.body.classList.toggle('reduce-motion', !!A11Y.motion);
   document.getElementById('theme-icon').textContent = isDark ? '☀️' : '🌙';
-  document.getElementById('theme-label').textContent = isDark ? 'Claro' : 'Oscuro';
+  document.getElementById('theme-label').textContent = tr(isDark ? 'Claro' : 'Oscuro');
   document.getElementById('theme-toggle').setAttribute('aria-pressed', isDark);
   document.getElementById('fs-val').textContent = Math.round(FS * 100) + '%';
   const [dec, inc] = document.querySelectorAll('.fs-ctrl button');
@@ -603,7 +796,7 @@ function switchTab(id) {
 function buildGroupTabs() {
   document.getElementById('group-tabs').innerHTML = groupsOf(gender).map(g =>
     `<div class="g-tab${g.gid === currentGroup ? ' active' : ''}" style="--gc:${groupColor(g.gid)};--gt:${textOn(groupColor(g.gid))}" onclick="showGroup(${g.gid})"
-      role="button" tabindex="0" aria-pressed="${g.gid === currentGroup}" aria-label="Grupo ${groupNum(g.gid)}">${groupNum(g.gid)}</div>`).join('');
+      role="button" tabindex="0" aria-pressed="${g.gid === currentGroup}" aria-label="${tr('Grupo {n}', { n: groupNum(g.gid) })}">${groupNum(g.gid)}</div>`).join('');
 }
 
 function showGroup(gid) {
@@ -619,15 +812,15 @@ function buildStandings() {
   const rows = g.standings.map((s, i) => {
     const t = TEAMS[s.id];
     return `<div class="s-row${s.id === focusTeam ? ' highlighted' : ''}" data-tid="${s.id}" onclick="selectTeam('${s.id}')" title="${esc(t.name)} · ${esc(t.town)}"
-      role="button" tabindex="0" aria-label="${i + 1}º ${esc(t.name)}, ${esc(t.town)}: ${s.w} ganados, ${s.l} perdidos, ${s.pts} puntos${isFav(s.id) ? ', mi equipo' : ''}">
+      role="button" tabindex="0" aria-label="${tr('{pos} {name}, {town}: {w} ganados, {l} perdidos, {pts} puntos', { pos: ord(i + 1), name: esc(t.name), town: esc(t.town), w: s.w, l: s.l, pts: s.pts })}${isFav(s.id) ? tr(', mi equipo') : ''}">
       <span class="s-rank">${i + 1}</span>${badge(s.id)}
-      <span class="s-name">${isFav(s.id) ? '<span class="s-fav" title="Mi equipo">★</span>' : ''}${esc(t.name)}</span>
+      <span class="s-name">${isFav(s.id) ? `<span class="s-fav" title="${tr('Mi equipo')}">★</span>` : ''}${esc(t.name)}</span>
       <span>${s.j}</span><span>${s.w}</span><span>${s.l}</span><span>${s.pf}</span><span>${s.pa}</span><span class="s-pts">${s.pts}</span>
     </div>`;
   }).join('');
   document.getElementById('standings-scroll').innerHTML = `
     <div class="grp-label"><span class="grp-dot" style="background:${groupColor(g.gid)}"></span>${esc(g.name)} · ${gender === 'M' ? 'Masculí' : 'Femení'}</div>
-    <div class="s-head"><span>#</span><span></span><span>Equipo</span><span title="Jugados">J</span><span title="Ganados">G</span><span title="Perdidos">P</span><span title="Puntos a favor">PF</span><span title="Puntos en contra">PC</span><span title="Puntos de clasificación">Pts</span></div>
+    <div class="s-head"><span>#</span><span></span><span>${tr('Equipo')}</span><span title="${tr('Jugados')}">J</span><span title="${tr('Ganados')}">G</span><span title="${tr('Perdidos')}">P</span><span title="${tr('Puntos a favor')}">PF</span><span title="${tr('Puntos en contra')}">PC</span><span title="${tr('Puntos de clasificación')}">Pts</span></div>
     ${rows}`;
   const hl = document.querySelector('#standings-scroll .highlighted');
   if (hl) hl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
@@ -712,7 +905,7 @@ function refreshMap() {
      g.select('.halo').attr('fill', d.color).attr('opacity', d.inGroup.length ? .25 : 0);
      g.select('.core').attr('fill', d.color);
      g.select('text').text(d.ids.length > 1 ? d.ids.length : '');
-     g.attr('aria-label', `${muniName(d.m)}: ${d.ids.length} equipo${d.ids.length > 1 ? 's' : ''}`);
+     g.attr('aria-label', `${muniName(d.m)}: ${plural(d.ids.length, tr('equipo'), tr('equipos'))}`);
    });
   MAP.dots.selectAll('g.dot').sort((a, b) => a.inGroup.length - b.inGroup.length);
   scaleDots();
@@ -745,7 +938,7 @@ function zoomTo(where) {
 
 function buildLegend() {
   document.getElementById('legend').innerHTML = groupsOf(gender).map(g =>
-    `<span onclick="showGroup(${g.gid})" role="button" tabindex="0" aria-label="Ver grupo ${groupNum(g.gid)}" style="${g.gid === currentGroup ? 'font-weight:700;color:var(--text);text-decoration:underline' : ''}"><span class="grp-dot" style="background:${groupColor(g.gid)}"></span>G${groupNum(g.gid)}</span>`).join('');
+    `<span onclick="showGroup(${g.gid})" role="button" tabindex="0" aria-label="${tr('Ver grupo {n}', { n: groupNum(g.gid) })}" style="${g.gid === currentGroup ? 'font-weight:700;color:var(--text);text-decoration:underline' : ''}"><span class="grp-dot" style="background:${groupColor(g.gid)}"></span>G${groupNum(g.gid)}</span>`).join('');
 }
 
 // ── Tooltip ──
@@ -754,8 +947,8 @@ function showTooltip(e, m) {
   const ids = teamsInMuni(m);
   const tt = document.getElementById('tooltip');
   tt.innerHTML = `<div class="tt-town">${esc(muniName(m))}</div>` + (ids.length
-    ? ids.map(id => { const s = standingOf(id); return `<div class="tt-team">${badge(id, 18)}<span style="flex:1">${esc(TEAMS[id].name)}</span><span class="grp-tag"><span class="grp-dot" style="background:${groupColor(s.gid)}"></span>G${groupNum(s.gid)} · ${s.pos}º</span></div>`; }).join('')
-    : `<div class="tt-empty">Sin equipos cadetes ${gender === 'M' ? 'masculinos' : 'femeninos'}</div>`);
+    ? ids.map(id => { const s = standingOf(id); return `<div class="tt-team">${badge(id, 18)}<span style="flex:1">${esc(TEAMS[id].name)}</span><span class="grp-tag"><span class="grp-dot" style="background:${groupColor(s.gid)}"></span>G${groupNum(s.gid)} · ${ord(s.pos)}</span></div>`; }).join('')
+    : `<div class="tt-empty">${tr('Sin equipos cadetes {g}', { g: genderAdj(true) })}</div>`);
   tt.classList.add('visible');
   moveTooltip(e);
 }
@@ -778,7 +971,7 @@ function selectMuni(m, tid = null) {
   buildStandings();
   refreshMap();
   buildPanel();
-  document.getElementById('map-hint').textContent = `${muniName(m)} · ${ids.length ? ids.length + ' equipo' + (ids.length > 1 ? 's' : '') : 'sin equipos'}`;
+  updateMapHint();
   if (isMobile()) switchTab('panel');
   syncURL(true);
 }
@@ -795,8 +988,16 @@ function selectTeam(tid, opts = {}) {
 function clearSelection() {
   selectedMuni = null; focusTeam = null;
   buildStandings(); refreshMap(); buildPanel();
-  document.getElementById('map-hint').textContent = 'Haz clic en un municipio o en un punto para ver sus equipos';
+  updateMapHint();
   syncURL(true);
+}
+
+// Line under the map: the selected town and its teams, or how to use the map
+function updateMapHint() {
+  const n = selectedMuni ? teamsInMuni(selectedMuni).length : 0;
+  document.getElementById('map-hint').textContent = selectedMuni
+    ? `${muniName(selectedMuni)} · ${n ? plural(n, tr('equipo'), tr('equipos')) : tr('sin equipos')}`
+    : tr('Haz clic en un municipio o en un punto para ver sus equipos');
 }
 
 function zoomToMuni(m) {
@@ -813,7 +1014,7 @@ function buildPanel() {
 }
 
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
-const genderAdj = () => gender === 'M' ? 'masculino' : 'femenino';
+const genderAdj = (pl = false) => tr(gender === 'M' ? (pl ? 'masculinos' : 'masculino') : (pl ? 'femeninos' : 'femenino'));
 
 // Town with several teams: one card per team, each opens its own view
 function townViewHTML(m) {
@@ -822,17 +1023,17 @@ function townViewHTML(m) {
     <div id="panel-head">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <h2 id="panel-town">${esc(muniName(m))}</h2>
-        <button class="pill-btn" onclick="clearSelection()">✕ Cerrar</button>
+        <button class="pill-btn" onclick="clearSelection()">${tr('✕ Cerrar')}</button>
       </div>
-      <div id="panel-count">${ids.length ? `${plural(ids.length, 'equipo', 'equipos')} cadete${ids.length > 1 ? 's' : ''} ${genderAdj()}${ids.length > 1 ? 's' : ''} · elige uno para ver su ficha` : `Sin equipos cadetes ${genderAdj()}s`}</div>
+      <div id="panel-count">${ids.length ? tr(ids.length > 1 ? '{n} equipos cadetes {g} · elige uno para ver su ficha' : '1 equipo cadete {g} · elige uno para ver su ficha', { n: ids.length, g: genderAdj(ids.length > 1) }) : tr('Sin equipos cadetes {g}', { g: genderAdj(true) })}</div>
     </div>
     <div class="p-pad team-list">${ids.length ? ids.map(id => {
       const s = standingOf(id), t = TEAMS[id];
-      return `<div class="card e-card town-team" onclick="selectTeam('${id}')" role="button" tabindex="0" aria-label="Ver ${esc(t.name)}">${badge(id, 40)}
+      return `<div class="card e-card town-team" onclick="selectTeam('${id}')" role="button" tabindex="0" aria-label="${tr('Ver {name}', { name: esc(t.name) })}">${badge(id, 40)}
         <div class="e-main"><div class="e-name">${esc(t.name)}</div>
-        <div class="e-sub"><span class="grp-tag"><span class="grp-dot" style="background:${groupColor(s.gid)}"></span>Grup ${groupNum(s.gid)}</span> · ${s.pos}º de ${s.of} · ${s.w}-${s.l} · 🏟️ ${esc(t.venue)}</div></div>
+        <div class="e-sub"><span class="grp-tag"><span class="grp-dot" style="background:${groupColor(s.gid)}"></span>Grup ${groupNum(s.gid)}</span> · ${tr('{pos} de {of}', { pos: ord(s.pos), of: s.of })} · ${s.w}-${s.l} · 🏟️ ${esc(t.venue)}</div></div>
         <div style="text-align:right"><div class="e-stat">${s.pts}</div><div style="font-size:calc(11px*var(--fs));color:var(--text-3)">PTS</div></div></div>`;
-    }).join('') : `<div class="empty">🏟️<br><br>Ningún equipo de este municipio juega la Cadet Interterritorial ${gender === 'M' ? 'masculina' : 'femenina'}</div>`}</div>`;
+    }).join('') : `<div class="empty">🏟️<br><br>${tr('Ningún equipo de este municipio juega la Cadet Interterritorial {g}', { g: gender === 'M' ? 'masculina' : 'femenina' })}</div>`}</div>`;
 }
 
 // One match from `tid`'s point of view; the opponent opens its own view
@@ -840,8 +1041,8 @@ function matchRow(tid, m, isNext, cls = '') {
   const home = m.h === tid, opp = home ? m.a : m.h;
   const my = home ? m.hs : m.as, their = home ? m.as : m.hs;
   const res = isNext ? '' : `<span class="g-res" style="background:${my > their ? 'var(--won)' : 'var(--lost)'}">${my > their ? 'V' : 'D'}</span>`;
-  return `<div class="g-row ${cls}">${res}<span style="color:var(--text-3);font-size:calc(11px*var(--fs));width:14px" title="${home ? 'En casa' : 'Fuera'}">${home ? 'vs' : '@'}</span>${badge(opp, 18)}
-    <span class="g-opp link" role="button" tabindex="0" onclick="selectTeam('${opp}')" title="Ver ${esc(TEAMS[opp].name)}">${esc(TEAMS[opp].name)}</span>
+  return `<div class="g-row ${cls}">${res}<span style="color:var(--text-3);font-size:calc(11px*var(--fs));width:14px" title="${tr(home ? 'En casa' : 'Fuera')}">${home ? 'vs' : '@'}</span>${badge(opp, 18)}
+    <span class="g-opp link" role="button" tabindex="0" onclick="selectTeam('${opp}')" title="${tr('Ver {name}', { name: esc(TEAMS[opp].name) })}">${esc(TEAMS[opp].name)}</span>
     ${isNext ? `<span class="g-date">${fmtDate(m.date)}${m.date ? ' · ' + fmtTime(m.date) : ''}</span>` : `<span class="g-score">${my}-${their}</span><span class="g-date">${fmtDate(m.date)}</span>`}</div>`;
 }
 
@@ -860,7 +1061,7 @@ function formChart(tid, games) {
       <text x="${x + w / 2}" y="${o.won ? mid - h - 3 : mid + h + 10}" text-anchor="middle">${o.diff > 0 ? '+' : ''}${o.diff}</text></g>`;
   }).join('');
   const w = games.filter(m => outcome(tid, m).won).length;
-  return `<svg class="form-chart" viewBox="0 0 ${VW} ${VH}" role="img" aria-label="Diferencia de puntos en los últimos ${n} partidos: ${w} ganados y ${n - w} perdidos">
+  return `<svg class="form-chart" viewBox="0 0 ${VW} ${VH}" role="img" aria-label="${tr('Diferencia de puntos en los últimos {n} partidos: {w} ganados y {l} perdidos', { n, w, l: n - w })}">
     <line x1="0" x2="${VW}" y1="${mid}" y2="${mid}"/>${bars}</svg>`;
 }
 
@@ -880,27 +1081,29 @@ function teamViewHTML(tid) {
   const active = g.standings.filter(x => x.j);
   const rank = (k, asc) => [...active].sort((a, b) => asc ? a[k] / a.j - b[k] / b.j : b[k] / b.j - a[k] / a.j).findIndex(x => x.id === tid) + 1;
   const diff = s.pf - s.pa;
-  const lead = s.pos === 1 ? (g.standings[1] && s.pts > g.standings[1].pts ? `Líder, ${plural(s.pts - g.standings[1].pts, 'punto', 'puntos')} por delante del 2º` : 'Líder del grupo')
-                           : g.standings[0].pts === s.pts ? 'Empatado a puntos con el líder' : `A ${plural(g.standings[0].pts - s.pts, 'punto', 'puntos')} del líder`;
+  const pts = n => plural(n, tr('punto'), tr('puntos'));
+  const lead = s.pos === 1 ? (g.standings[1] && s.pts > g.standings[1].pts ? tr('Líder, {n} por delante del {second}', { n: pts(s.pts - g.standings[1].pts), second: ord(2) }) : tr('Líder del grupo'))
+                           : g.standings[0].pts === s.pts ? tr('Empatado a puntos con el líder') : tr('A {n} del líder', { n: pts(g.standings[0].pts - s.pts) });
+  const lastWon = done.length && outcome(tid, done[done.length - 1]).won;
   const facts = [
     lead,
-    s.j ? `${rank('pf', false)}º mejor ataque y ${rank('pa', true)}ª mejor defensa del grupo` : '',
-    done.length ? `Racha: ${streak} ${outcome(tid, done[done.length - 1]).won ? (streak > 1 ? 'victorias' : 'victoria') : (streak > 1 ? 'derrotas' : 'derrota')} seguida${streak > 1 ? 's' : ''}` : '',
-    done.length ? `En casa ${rec(true)} · fuera ${rec(false)}` : '',
+    s.j ? tr('{a} mejor ataque y {d} mejor defensa del grupo', { a: ord(rank('pf', false)), d: ordF(rank('pa', true)) }) : '',
+    done.length ? tr(streak > 1 ? (lastWon ? 'Racha: {n} victorias seguidas' : 'Racha: {n} derrotas seguidas') : (lastWon ? 'Racha: 1 victoria seguida' : 'Racha: 1 derrota seguida'), { n: streak }) : '',
+    done.length ? tr('En casa {h} · fuera {a}', { h: rec(true), a: rec(false) }) : '',
   ].filter(Boolean);
 
   let nextHTML = '';
   if (next) {
     const host = next.h, days = next.date ? Math.round((new Date(next.date.toDateString()) - today()) / 864e5) : null;
     const fin = played(next), o = fin && outcome(tid, next);
-    const when = fin ? `Final · ${o.won ? 'Victoria' : 'Derrota'}` : days === null ? '' : days === 0 ? 'Hoy' : days === 1 ? 'Mañana' : `En ${days} días`;
+    const when = fin ? tr(o.won ? 'Final · Victoria' : 'Final · Derrota') : days === null ? '' : days === 0 ? tr('Hoy') : days === 1 ? tr('Mañana') : tr('En {n} días', { n: days });
     const side = id => `<div class="nx-team${id === tid ? ' me' : ''}">${badge(id, 44)}<span>${esc(TEAMS[id].name)}</span></div>`;
-    nextHTML = `<div class="sec">Próximo partido</div>
+    nextHTML = `<div class="sec">${tr('Próximo partido')}</div>
       <div class="card nx-card">
-        <div class="nx-when">${when ? `<b${fin ? ` style="color:${o.won ? 'var(--won-text)' : 'var(--lost-text)'}"` : ''}>${when}</b> · ` : ''}${fmtDate(next.date)}${next.date ? ' · ' + fmtTime(next.date) : ''}${next.st === 'ajornat' ? ' · aplazado' : ''}</div>
-        <div class="nx-teams">${side(next.h)}${fin ? `<span class="nx-score" aria-label="Resultado ${next.hs} a ${next.as}">${next.hs}-${next.as}</span>` : '<span class="nx-vs">VS</span>'}${side(next.a)}</div>
-        <div class="nx-venue">🏟️ ${esc(TEAMS[host].venue)} · ${esc(TEAMS[host].town)} ${host === tid ? '(en casa)' : '(fuera)'}
-          ${fin ? '' : `· <a href="${directionsURL(host)}" target="_blank" rel="noopener">🧭 Cómo llegar</a>`}</div>
+        <div class="nx-when">${when ? `<b${fin ? ` style="color:${o.won ? 'var(--won-text)' : 'var(--lost-text)'}"` : ''}>${when}</b> · ` : ''}${fmtDate(next.date)}${next.date ? ' · ' + fmtTime(next.date) : ''}${next.st === 'ajornat' ? tr(' · aplazado') : ''}</div>
+        <div class="nx-teams">${side(next.h)}${fin ? `<span class="nx-score" aria-label="${tr('Resultado {h} a {a}', { h: next.hs, a: next.as })}">${next.hs}-${next.as}</span>` : '<span class="nx-vs">VS</span>'}${side(next.a)}</div>
+        <div class="nx-venue">🏟️ ${esc(TEAMS[host].venue)} · ${esc(TEAMS[host].town)} ${tr(host === tid ? '(en casa)' : '(fuera)')}
+          ${fin ? '' : `· <a href="${directionsURL(host)}" target="_blank" rel="noopener">${tr('🧭 Cómo llegar')}</a>`}</div>
       </div>`;
   }
 
@@ -908,8 +1111,8 @@ function teamViewHTML(tid) {
     <div id="panel-head" class="tv-head">
       <div class="tv-crumb">${esc(muniName(muniOf(tid)) || t.town)} · Grup ${groupNum(s.gid)} · ${gender === 'M' ? 'Masculí' : 'Femení'}</div>
       <div class="tv-nav">
-        ${others.length ? `<button class="pill-btn" onclick="selectMuni('${muniOf(tid)}')" title="Ver todos los equipos de ${esc(t.town)}">← ${plural(others.length + 1, 'equipo', 'equipos')} en ${esc(t.town)}</button>` : ''}
-        <button class="pill-btn" onclick="clearSelection()">✕ Cerrar</button>
+        ${others.length ? `<button class="pill-btn" onclick="selectMuni('${muniOf(tid)}')" title="${tr('Ver todos los equipos de {town}', { town: esc(t.town) })}">${tr('← {n} en {town}', { n: plural(others.length + 1, tr('equipo'), tr('equipos')), town: esc(t.town) })}</button>` : ''}
+        <button class="pill-btn" onclick="clearSelection()">${tr('✕ Cerrar')}</button>
       </div>
     </div>
     <div class="p-pad tv">
@@ -919,43 +1122,43 @@ function teamViewHTML(tid) {
           <div style="min-width:0">
             <h2 id="panel-town" class="tv-name">${esc(t.name)}</h2>
             <div class="tc-club">${esc(t.club)} · ${esc(t.town)}</div>
-            <div class="tc-pills"><span class="tc-pill">Grup ${groupNum(s.gid)}</span><span class="tc-pill">${s.pos}º de ${s.of}</span><span class="tc-pill">${s.j} jugados</span></div>
+            <div class="tc-pills"><span class="tc-pill">Grup ${groupNum(s.gid)}</span><span class="tc-pill">${tr('{pos} de {of}', { pos: ord(s.pos), of: s.of })}</span><span class="tc-pill">${tr('{n} jugados', { n: s.j })}</span></div>
           </div>
           <button class="fav-btn${isFav(tid) ? ' on' : ''}" data-tid="${tid}" onclick="toggleFav('${tid}', event)" aria-pressed="${isFav(tid)}"
-            title="${isFav(tid) ? 'Quitar de Mis equipos' : 'Añadir a Mis equipos'}" aria-label="Mi equipo">${isFav(tid) ? '★' : '☆'}</button>
+            title="${tr(isFav(tid) ? 'Quitar de Mis equipos' : 'Añadir a Mis equipos')}" aria-label="${tr('Mi equipo')}">${isFav(tid) ? '★' : '☆'}</button>
         </div>
         <div class="tc-stats tv-stats">
-          <div><b>${s.pos}º</b><small>POSICIÓN</small></div>
+          <div><b>${ordBig(s.pos)}</b><small>${tr('POSICIÓN')}</small></div>
           <div><b>${s.w}-${s.l}</b><small>G-P</small></div>
-          <div><b>${s.pts}</b><small>PUNTOS</small></div>
+          <div><b>${s.pts}</b><small>${tr('PUNTOS')}</small></div>
           <div><b>${s.j ? (s.pf / s.j).toFixed(1) : '–'}</b><small>PF/PART.</small></div>
           <div><b>${s.j ? (s.pa / s.j).toFixed(1) : '–'}</b><small>PC/PART.</small></div>
-          <div><b style="color:${diff >= 0 ? 'var(--won-text)' : 'var(--lost-text)'}">${diff > 0 ? '+' : ''}${diff}</b><small>DIFERENCIA</small></div>
+          <div><b style="color:${diff >= 0 ? 'var(--won-text)' : 'var(--lost-text)'}">${diff > 0 ? '+' : ''}${diff}</b><small>${tr('DIFERENCIA')}</small></div>
         </div>
         <div class="tc-actions">
-          <a class="act" href="${directionsURL(tid)}" target="_blank" rel="noopener" title="Abrir el pabellón en Google Maps">🧭 Cómo llegar</a>
-          <button class="act" onclick="downloadICS('${tid}')" title="Descargar los ${upcoming.filter(m => m.date).length} partidos pendientes (.ics)">📅 Añadir al calendario</button>
-          <button class="act" onclick="shareTeam('${tid}')" title="Copiar el enlace a este equipo">🔗 Compartir</button>
+          <a class="act" href="${directionsURL(tid)}" target="_blank" rel="noopener" title="${tr('Abrir el pabellón en Google Maps')}">${tr('🧭 Cómo llegar')}</a>
+          <button class="act" onclick="downloadICS('${tid}')" title="${tr('Descargar los {n} partidos pendientes (.ics)', { n: upcoming.filter(m => m.date).length })}">${tr('📅 Añadir al calendario')}</button>
+          <button class="act" onclick="shareTeam('${tid}')" title="${tr('Copiar el enlace a este equipo')}">${tr('🔗 Compartir')}</button>
         </div>
       </div>
       <div class="tv-grid">
         <div>
           ${nextHTML}
-          ${done.length ? `<div class="sec">Forma · últimos ${done.slice(-10).length} partidos</div><div class="card tv-box">${formChart(tid, done.slice(-10))}
+          ${done.length ? `<div class="sec">${tr('Forma · últimos {n} partidos', { n: done.slice(-10).length })}</div><div class="card tv-box">${formChart(tid, done.slice(-10))}
             <ul class="facts">${facts.map(f => `<li>${f}</li>`).join('')}</ul></div>` : ''}
-          ${done.length ? `<div class="sec">Últimos resultados</div><div class="card tv-box">${done.slice(-5).reverse().map(m => matchRow(tid, m, false)).join('')}</div>` : ''}
-          ${upcoming.length > 1 ? `<div class="sec">Siguientes partidos</div><div class="card tv-box">${upcoming.slice(1, 5).map(m => matchRow(tid, m, true)).join('')}</div>` : ''}
+          ${done.length ? `<div class="sec">${tr('Últimos resultados')}</div><div class="card tv-box">${done.slice(-5).reverse().map(m => matchRow(tid, m, false)).join('')}</div>` : ''}
+          ${upcoming.length > 1 ? `<div class="sec">${tr('Siguientes partidos')}</div><div class="card tv-box">${upcoming.slice(1, 5).map(m => matchRow(tid, m, true)).join('')}</div>` : ''}
           <details class="cal">
-            <summary>📋 Calendario completo · ${ms.length} partidos</summary>
+            <summary>${tr('📋 Calendario completo · {n} partidos', { n: ms.length })}</summary>
             <div class="cal-list">${ms.map(m => matchRow(tid, m, !played(m), m === upcoming[0] ? 'cal-next' : '')).join('')}</div>
           </details>
         </div>
         <div>
-          <div class="sec">Pabellón</div>
+          <div class="sec">${tr('Pabellón')}</div>
           <div class="card tv-box venue"><b>🏟️ ${esc(t.venue)}</b><br>${esc(t.street)}<br>${esc([t.cp, t.town].filter(Boolean).join(' '))}${t.prov && t.prov !== 'Andorra' ? ' (' + esc(t.prov) + ')' : t.prov === 'Andorra' ? ' (Andorra)' : ''}
-            ${t.day ? `<br>🕒 Juega en casa: <b>${DAYS_ES[t.day] || esc(t.day)}${t.hour ? ' · ' + esc(t.hour) : ''}</b>` : ''}</div>
-          ${!done.length && facts.length ? `<div class="sec">En el grupo</div><div class="card tv-box"><ul class="facts">${facts.map(f => `<li>${f}</li>`).join('')}</ul></div>` : ''}
-          ${others.length ? `<div class="sec">También en ${esc(t.town)}</div>${others.map(id => { const o = standingOf(id); return `<div class="card e-card" onclick="selectTeam('${id}')" role="button" tabindex="0">${badge(id, 26)}<div class="e-main"><div class="e-name">${esc(TEAMS[id].name)}</div><div class="e-sub">Grup ${groupNum(o.gid)} · ${o.pos}º · ${o.w}-${o.l}</div></div></div>`; }).join('')}` : ''}
+            ${t.day ? `<br>${tr('🕒 Juega en casa:')} <b>${LANG === 'es' && DAYS_ES[t.day] || esc(t.day)}${t.hour ? ' · ' + esc(t.hour) : ''}</b>` : ''}</div>
+          ${!done.length && facts.length ? `<div class="sec">${tr('En el grupo')}</div><div class="card tv-box"><ul class="facts">${facts.map(f => `<li>${f}</li>`).join('')}</ul></div>` : ''}
+          ${others.length ? `<div class="sec">${tr('También en {town}', { town: esc(t.town) })}</div>${others.map(id => { const o = standingOf(id); return `<div class="card e-card" onclick="selectTeam('${id}')" role="button" tabindex="0">${badge(id, 26)}<div class="e-main"><div class="e-name">${esc(TEAMS[id].name)}</div><div class="e-sub">Grup ${groupNum(o.gid)} · ${ord(o.pos)} · ${o.w}-${o.l}</div></div></div>`; }).join('')}` : ''}
         </div>
       </div>
       ${lastGameHTML(tid, done)}
@@ -971,26 +1174,26 @@ function lastGameHTML(tid, done) {
   const pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '–';
   const row = p => p.min ? `<tr><td>${esc(p.n)}</td><td>${Math.round(p.min)}</td><td class="pl-pts">${p.pts}</td><td>${p.t2}</td><td>${p.t3}</td>
       <td>${p.tl[0]}/${p.tl[1]}</td><td>${pct(...p.tl)}</td><td>${p.fc}</td><td style="color:${p.pm > 0 ? 'var(--won-text)' : p.pm < 0 ? 'var(--lost-text)' : 'inherit'}">${p.pm > 0 ? '+' : ''}${p.pm}</td></tr>`
-    : `<tr><td>${esc(p.n)}</td><td colspan="8" style="color:var(--text-3)">No jugó</td></tr>`;
+    : `<tr><td>${esc(p.n)}</td><td colspan="8" style="color:var(--text-3)">${tr('No jugó')}</td></tr>`;
   const table = id => {
     const list = [...m.bx[id === m.h ? 'h' : 'a']].sort((a, b) => b.pts - a.pts || b.min - a.min);
     const sum = f => list.reduce((n, p) => n + f(p), 0);
     const tl = [sum(p => p.tl[0]), sum(p => p.tl[1])];
     return `<div class="pl-scroll card">
-      <div class="lg-team${id === tid ? ' me' : ''}">${badge(id, 22)}<span class="lg-name${id === tid ? '"' : ` link" role="button" tabindex="0" onclick="selectTeam('${id}')" title="Ver ${esc(TEAMS[id].name)}"`}>${esc(TEAMS[id].name)}</span><b>${sum(p => p.pts)}</b></div>
+      <div class="lg-team${id === tid ? ' me' : ''}">${badge(id, 22)}<span class="lg-name${id === tid ? '"' : ` link" role="button" tabindex="0" onclick="selectTeam('${id}')" title="${tr('Ver {name}', { name: esc(TEAMS[id].name) })}"`}>${esc(TEAMS[id].name)}</span><b>${sum(p => p.pts)}</b></div>
       <table class="pl-table">
-        <thead><tr><th>Jugador</th><th title="Minutos">MIN</th><th title="Puntos">PTS</th><th title="Tiros de 2 anotados">T2</th><th title="Triples anotados">T3</th><th title="Tiros libres anotados / intentados">TL</th><th title="Porcentaje de tiros libres">TL%</th><th title="Faltas cometidas">FC</th><th title="Diferencia de puntos con el jugador en pista">+/−</th></tr></thead>
+        <thead><tr><th>${tr('Jugador')}</th><th title="${tr('Minutos')}">MIN</th><th title="${tr('Puntos')}">PTS</th><th title="${tr('Tiros de 2 anotados')}">T2</th><th title="${tr('Triples anotados')}">T3</th><th title="${tr('Tiros libres anotados / intentados')}">TL</th><th title="${tr('Porcentaje de tiros libres')}">TL%</th><th title="${tr('Faltas cometidas')}">FC</th><th title="${tr('Diferencia de puntos con el jugador en pista')}">+/−</th></tr></thead>
         <tbody>${list.map(row).join('')}</tbody>
-        <tfoot><tr><td>Equipo</td><td></td><td>${sum(p => p.pts)}</td><td>${sum(p => p.t2)}</td><td>${sum(p => p.t3)}</td><td>${tl[0]}/${tl[1]}</td><td>${pct(...tl)}</td><td>${sum(p => p.fc)}</td><td></td></tr></tfoot>
+        <tfoot><tr><td>${tr('Equipo')}</td><td></td><td>${sum(p => p.pts)}</td><td>${sum(p => p.t2)}</td><td>${sum(p => p.t3)}</td><td>${tl[0]}/${tl[1]}</td><td>${pct(...tl)}</td><td>${sum(p => p.fc)}</td><td></td></tr></tfoot>
       </table>
     </div>`;
   };
-  return `<div class="sec">Último partido · por jugador</div>
-    <div class="card g-row lg-head"><span class="g-res" style="background:${won ? 'var(--won)' : 'var(--lost)'}">${won ? 'V' : 'D'}</span><span style="color:var(--text-3);font-size:calc(11px*var(--fs));width:14px" title="${home ? 'En casa' : 'Fuera'}">${home ? 'vs' : '@'}</span>${badge(opp, 18)}
-      <span class="g-opp link" role="button" tabindex="0" onclick="selectTeam('${opp}')" title="Ver ${esc(TEAMS[opp].name)}">${esc(TEAMS[opp].name)}</span>
+  return `<div class="sec">${tr('Último partido · por jugador')}</div>
+    <div class="card g-row lg-head"><span class="g-res" style="background:${won ? 'var(--won)' : 'var(--lost)'}">${won ? 'V' : 'D'}</span><span style="color:var(--text-3);font-size:calc(11px*var(--fs));width:14px" title="${tr(home ? 'En casa' : 'Fuera')}">${home ? 'vs' : '@'}</span>${badge(opp, 18)}
+      <span class="g-opp link" role="button" tabindex="0" onclick="selectTeam('${opp}')" title="${tr('Ver {name}', { name: esc(TEAMS[opp].name) })}">${esc(TEAMS[opp].name)}</span>
       <span class="g-score">${my}-${their}</span><span class="g-date">${fmtDate(m.date)}</span></div>
     <div class="lg-grid">${table(tid)}${table(opp)}</div>
-    <div class="pl-note">Según el acta digital del partido. Nombres abreviados.</div>`;
+    <div class="pl-note">${tr('Según el acta digital del partido. Nombres abreviados.')}</div>`;
 }
 
 // Players: abbreviated names ("Pol H.") and their stats, best scorers first.
@@ -1046,11 +1249,11 @@ function playersHTML(tid) {
     ['🎯', 'Más triples', best(list, p => p.t3), p => p.t3 + ' triples'],
     ['🆓', 'Mejor en tiros libres', best(list.filter(p => p.tl[1] >= 10), p => p.tl[0] / p.tl[1]), p => Math.round(100 * p.tl[0] / p.tl[1]) + '% (' + p.tl[0] + '/' + p.tl[1] + ')'],
     ['⏱️', 'Más minutos', best(regular, p => p.min / p.pj), p => Math.round(p.min / p.pj) + ' min/p'],
-  ].filter(l => l[2] && (l[1] !== 'Más triples' || l[2].t3 > 0));
+  ].filter(l => l[2] && (l[1] !== 'Más triples' || l[2].t3 > 0));   // labels are translated when shown
 
   const th = c => {
     const on = PL.key === c.k;
-    return `<th aria-sort="${on ? (PL.dir < 0 ? 'descending' : 'ascending') : 'none'}"><button class="pl-sort${on ? ' on' : ''}" data-k="${c.k}" onclick="sortPlayers('${c.k}')" title="${c.t} · clic para ordenar">${c.h}${on ? (PL.dir < 0 ? ' ▾' : ' ▴') : ''}</button></th>`;
+    return `<th aria-sort="${on ? (PL.dir < 0 ? 'descending' : 'ascending') : 'none'}"><button class="pl-sort${on ? ' on' : ''}" data-k="${c.k}" onclick="sortPlayers('${c.k}')" title="${tr(c.t)} · ${tr('clic para ordenar')}">${c.h}${on ? (PL.dir < 0 ? ' ▾' : ' ▴') : ''}</button></th>`;
   };
   const row = (p, i) => `<tr><td><span class="pl-rank">${i + 1}</span>${esc(p.n)}</td>${PCOLS.map(c => {
     const v = c.v(p, total);
@@ -1060,16 +1263,16 @@ function playersHTML(tid) {
   const tl = [sum('t2'), sum('t3'), list.reduce((n, p) => n + p.tl[0], 0), list.reduce((n, p) => n + p.tl[1], 0)];
 
   return `<div id="pl-box" data-tid="${tid}">
-    <div class="sec">Jugadores · ${list.length}</div>
-    ${leaders.length ? `<div class="pl-leaders">${leaders.map(([ico, label, p, fmt]) => `<div class="card pl-leader"><span class="pl-ico" aria-hidden="true">${ico}</span><div><small>${label}</small><b>${esc(p.n)}</b><span>${fmt(p)}</span></div></div>`).join('')}</div>` : ''}
+    <div class="sec">${tr('Jugadores · {n}', { n: list.length })}</div>
+    ${leaders.length ? `<div class="pl-leaders">${leaders.map(([ico, label, p, fmt]) => `<div class="card pl-leader"><span class="pl-ico" aria-hidden="true">${ico}</span><div><small>${tr(label)}</small><b>${esc(p.n)}</b><span>${fmt(p)}</span></div></div>`).join('')}</div>` : ''}
     <div class="pl-scroll card">
       <table class="pl-table">
-        <thead><tr><th><button class="pl-sort${PL.key === 'default' ? ' on' : ''}" onclick="sortPlayers('default')" title="Orden por defecto">Jugador</button></th>${PCOLS.map(th).join('')}</tr></thead>
+        <thead><tr><th><button class="pl-sort${PL.key === 'default' ? ' on' : ''}" onclick="sortPlayers('default')" title="${tr('Orden por defecto')}">${tr('Jugador')}</button></th>${PCOLS.map(th).join('')}</tr></thead>
         <tbody>${list.map(row).join('')}</tbody>
-        <tfoot><tr><td>Equipo</td><td></td><td></td><td></td><td>${total}</td><td></td><td>${tl[0]}</td><td>${tl[1]}</td><td>${tl[2]}/${tl[3]}</td><td>${tl[3] ? Math.round(100 * tl[2] / tl[3]) + '%' : '–'}</td><td></td><td></td></tr></tfoot>
+        <tfoot><tr><td>${tr('Equipo')}</td><td></td><td></td><td></td><td>${total}</td><td></td><td>${tl[0]}</td><td>${tl[1]}</td><td>${tl[2]}/${tl[3]}</td><td>${tl[3] ? Math.round(100 * tl[2] / tl[3]) + '%' : '–'}</td><td></td><td></td></tr></tfoot>
       </table>
     </div>
-    <div class="pl-note">Pulsa una columna para ordenar. Según las actas digitales de la Federació, que puede que no incluyan todos los partidos: de los tiros de 2 y triples solo se registran los anotados, y las faltas por partido llegan redondeadas. Nombres abreviados.</div>
+    <div class="pl-note">${tr('Pulsa una columna para ordenar. Según las actas digitales de la Federació, que puede que no incluyan todos los partidos: de los tiros de 2 y triples solo se registran los anotados, y las faltas por partido llegan redondeadas. Nombres abreviados.')}</div>
   </div>`;
 }
 
@@ -1086,7 +1289,7 @@ function topScorersHTML() {
   if (!all.length) return '';
   const minGames = Math.max(1, Math.ceil(Math.max(...all.map(p => p.pj)) / 2));
   const top = all.filter(p => p.pj >= minGames).sort((a, b) => ppg(b) - ppg(a)).slice(0, 5);
-  return `<div class="sec">🔥 Máximos anotadores</div>` + top.map((p, i) => `<div class="card e-card" onclick="selectTeam('${p.tid}')" role="button" tabindex="0">
+  return `<div class="sec">${tr('🔥 Máximos anotadores')}</div>` + top.map((p, i) => `<div class="card e-card" onclick="selectTeam('${p.tid}')" role="button" tabindex="0">
     <span style="font-size:calc(12px*var(--fs));font-weight:700;color:var(--text-3);width:14px;text-align:center">${i + 1}</span>${badge(p.tid, 24)}
     <div class="e-main"><div class="e-name">${esc(p.n)}</div><div class="e-sub">${esc(TEAMS[p.tid].name)} · ${p.pj} PJ</div></div>
     <div style="text-align:right"><div class="e-stat">${ppg(p).toFixed(1)}</div><div style="font-size:calc(11px*var(--fs));color:var(--text-3)">PTS/P</div></div></div>`).join('');
@@ -1108,21 +1311,21 @@ function summaryHTML() {
   const favHTML = favorites.map(id => {
     const s = standingOf(id), nx = pending(id).find(m => m.date);
     const opp = nx && TEAMS[nx.h === id ? nx.a : nx.h];
-    const sub = nx ? `Próximo: ${fmtDate(nx.date)} · ${fmtTime(nx.date)} ${nx.h === id ? 'vs' : '@'} ${esc(opp.name)}` : 'Sin partidos pendientes';
-    return card(id, `<div style="text-align:right"><div class="e-stat">${s.pos}º</div><div style="font-size:calc(11px*var(--fs));color:var(--text-3)">G${groupNum(s.gid)} · ${s.w}-${s.l}</div></div>`,
+    const sub = nx ? tr('Próximo: {d} · {t} {vs} {opp}', { d: fmtDate(nx.date), t: fmtTime(nx.date), vs: nx.h === id ? 'vs' : '@', opp: esc(opp.name) }) : tr('Sin partidos pendientes');
+    return card(id, `<div style="text-align:right"><div class="e-stat">${ordBig(s.pos)}</div><div style="font-size:calc(11px*var(--fs));color:var(--text-3)">G${groupNum(s.gid)} · ${s.w}-${s.l}</div></div>`,
       `<span class="fav-tag">${TEAMS[id].gender === 'M' ? 'MASC' : 'FEM'}</span> ${sub}`);
   }).join('');
   return `<div class="p-pad">
-    ${favorites.length ? `<div class="sec">⭐ Mis equipos</div>${favHTML}` : ''}
-    <div style="text-align:center;padding:6px 0 4px"><div style="font-size:calc(30px*var(--fs))">🏀</div><div style="font-size:calc(13px*var(--fs));color:var(--text-3);line-height:1.7;margin-top:4px">Selecciona un municipio en el mapa<br>o un equipo de la clasificación${favorites.length ? '' : '<br>· marca con ☆ tus equipos para tenerlos aquí ·'}</div></div>
-    <div class="sec">🏆 Líderes de grupo</div>
+    ${favorites.length ? `<div class="sec">${tr('⭐ Mis equipos')}</div>${favHTML}` : ''}
+    <div style="text-align:center;padding:6px 0 4px"><div style="font-size:calc(30px*var(--fs))">🏀</div><div style="font-size:calc(13px*var(--fs));color:var(--text-3);line-height:1.7;margin-top:4px">${tr('Selecciona un municipio en el mapa<br>o un equipo de la clasificación')}${favorites.length ? '' : tr('<br>· marca con ☆ tus equipos para tenerlos aquí ·')}</div></div>
+    <div class="sec">${tr('🏆 Líderes de grupo')}</div>
     ${leaders.map(id => { const s = standingOf(id); return card(id, `<div style="text-align:right"><div class="e-stat">${s.w}-${s.l}</div><div style="font-size:calc(11px*var(--fs));color:var(--text-3)">${s.pts} pts</div></div>`, `<span class="grp-tag"><span class="grp-dot" style="background:${groupColor(s.gid)}"></span>Grup ${groupNum(s.gid)}</span> · ${esc(TEAMS[id].town)}`); }).join('')}
-    ${upcoming.length ? `<div class="sec">📅 Próximos 7 días</div>${upcoming.map(m => `<div class="card e-card" onclick="selectTeam('${m.h}')" role="button" tabindex="0">${badge(m.h, 22)}<div class="e-main"><div class="e-name" style="font-size:calc(11.5px*var(--fs))">${esc(TEAMS[m.h].name)} – ${esc(TEAMS[m.a].name)}</div><div class="e-sub">${fmtDate(m.date)} · ${fmtTime(m.date)} · ${esc(TEAMS[m.h].town)}</div></div>${badge(m.a, 22)}</div>`).join('')}` : ''}
+    ${upcoming.length ? `<div class="sec">${tr('📅 Próximos 7 días')}</div>${upcoming.map(m => `<div class="card e-card" onclick="selectTeam('${m.h}')" role="button" tabindex="0">${badge(m.h, 22)}<div class="e-main"><div class="e-name" style="font-size:calc(11.5px*var(--fs))">${esc(TEAMS[m.h].name)} – ${esc(TEAMS[m.a].name)}</div><div class="e-sub">${fmtDate(m.date)} · ${fmtTime(m.date)} · ${esc(TEAMS[m.h].town)}</div></div>${badge(m.a, 22)}</div>`).join('')}` : ''}
     ${topScorersHTML()}
-    <div class="sec">📊 Mejores ataques</div>
-    ${topOff.map(id => card(id, `<div class="e-stat">${avg(id, 'pf').toFixed(1)}</div>`, `${esc(TEAMS[id].town)} · puntos/partido`)).join('')}
-    <div class="sec">🛡️ Mejores defensas</div>
-    ${topDef.map(id => card(id, `<div class="e-stat" style="color:var(--won-text)">${avg(id, 'pa').toFixed(1)}</div>`, `${esc(TEAMS[id].town)} · recibidos/partido`)).join('')}
+    <div class="sec">${tr('📊 Mejores ataques')}</div>
+    ${topOff.map(id => card(id, `<div class="e-stat">${avg(id, 'pf').toFixed(1)}</div>`, tr('{town} · puntos/partido', { town: esc(TEAMS[id].town) }))).join('')}
+    <div class="sec">${tr('🛡️ Mejores defensas')}</div>
+    ${topDef.map(id => card(id, `<div class="e-stat" style="color:var(--won-text)">${avg(id, 'pa').toFixed(1)}</div>`, tr('{town} · recibidos/partido', { town: esc(TEAMS[id].town) }))).join('')}
   </div>`;
 }
 
@@ -1137,14 +1340,12 @@ function setGender(g, sync = true) {
   currentGroup = groupsOf(gender)[0].gid;
   selectedMuni = null; focusTeam = null;
   buildGroupTabs(); buildStandings(); refreshMap(); buildPanel();
-  document.getElementById('map-hint').textContent = 'Haz clic en un municipio o en un punto para ver sus equipos';
+  updateMapHint();
   if (sync) syncURL(true);
 }
 const toggleGender = () => setGender(gender === 'M' ? 'F' : 'M');
 
 document.getElementById('season').textContent = DATA.season;
-document.getElementById('data-note').textContent =
-  `Datos de basquetcatala.cat a ${new Date(DATA.scrapedAt).toLocaleDateString('es-ES', { day:'numeric', month:'long', year:'numeric' })} · copia estática`;
 // ═══════════════════════════════════════════════════════════════
 // RESIZABLE COLUMNS (desktop)
 // ═══════════════════════════════════════════════════════════════
@@ -1241,12 +1442,12 @@ function renderSearch() {
   if (!input.value.trim() || norm(input.value.trim()).length < 2) { closeSearch(); return; }
   let html = '', lastType = null;
   searchItems.forEach((it, i) => {
-    if (it.type !== lastType) { html += `<div class="sr-sec">${it.type === 'team' ? 'Equipos' : 'Municipios'}</div>`; lastType = it.type; }
+    if (it.type !== lastType) { html += `<div class="sr-sec">${tr(it.type === 'team' ? 'Equipos' : 'Municipios')}</div>`; lastType = it.type; }
     const cls = `sr-item${i === searchActive ? ' active' : ''}`;
     if (it.type === 'team') {
       const t = TEAMS[it.id], st = standingOf(it.id);
       html += `<div class="${cls}" role="option" id="sr-${i}" onmousedown="event.preventDefault()" onclick="pickSearch(${i})">${badge(it.id, 26)}
-        <div class="sr-main"><div class="sr-name">${isFav(it.id) ? '<span class="s-fav">★</span>' : ''}${esc(t.name)}</div><div class="sr-sub">${esc(t.town)} · ${st.pos}º de ${st.of}</div></div>
+        <div class="sr-main"><div class="sr-name">${isFav(it.id) ? '<span class="s-fav">★</span>' : ''}${esc(t.name)}</div><div class="sr-sub">${esc(t.town)} · ${tr('{pos} de {of}', { pos: ord(st.pos), of: st.of })}</div></div>
         <span class="sr-tag" style="background:${groupColor(st.gid)};color:${textOn(groupColor(st.gid))}">${t.gender === 'M' ? 'MASC' : 'FEM'} · G${groupNum(st.gid)}</span></div>`;
     } else {
       const nm = it.ids.filter(id => TEAMS[id].gender === 'M').length, nf = it.ids.length - nm;
@@ -1254,7 +1455,7 @@ function renderSearch() {
         <div class="sr-main"><div class="sr-name">${esc(it.name)}</div><div class="sr-sub">${[nm && nm + ' masc.', nf && nf + ' fem.'].filter(Boolean).join(' · ')}</div></div></div>`;
     }
   });
-  box.innerHTML = html || `<div class="sr-empty">Sin resultados para «${esc(input.value.trim())}»</div>`;
+  box.innerHTML = html || `<div class="sr-empty">${tr('Sin resultados para «{q}»', { q: esc(input.value.trim()) })}</div>`;
   box.classList.add('open');
   input.setAttribute('aria-expanded', 'true');
   input.setAttribute('aria-activedescendant', searchActive >= 0 ? 'sr-' + searchActive : '');
@@ -1345,8 +1546,8 @@ async function shareTeam(tid) {
     try { await navigator.share({ title: `${t.name} · Cadet Interterritorial`, url }); return; }
     catch (e) { if (e.name === 'AbortError') return; }
   }
-  try { await navigator.clipboard.writeText(url); toast('🔗 Enlace copiado'); }
-  catch (e) { toast('No se pudo copiar el enlace'); }
+  try { await navigator.clipboard.writeText(url); toast(tr('🔗 Enlace copiado')); }
+  catch (e) { toast(tr('No se pudo copiar el enlace')); }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1360,7 +1561,7 @@ const ICS_TZ = ['BEGIN:VTIMEZONE', 'TZID:Europe/Madrid',
 function downloadICS(tid) {
   const t = TEAMS[tid];
   const games = pending(tid).filter(m => m.date);
-  if (!games.length) { toast('No hay partidos pendientes con fecha'); return; }
+  if (!games.length) { toast(tr('No hay partidos pendientes con fecha')); return; }
   const pad = n => String(n).padStart(2, '0');
   const local = d => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
   const text = s => String(s).replace(/[\;,]/g, c => '\\' + c).replace(/\n/g, '\\n');
@@ -1376,7 +1577,7 @@ function downloadICS(tid) {
       `DTEND;TZID=Europe/Madrid:${local(end)}`,
       `SUMMARY:${text(`🏀 ${home.name} – ${TEAMS[m.a].name}`)}`,
       `LOCATION:${text([home.venue, home.street, [home.cp, home.town].filter(Boolean).join(' ')].filter(Boolean).join(', '))}`,
-      `DESCRIPTION:${text(`Cadet Interterritorial ${t.gender === 'M' ? 'masculí' : 'femení'} · Grup ${groupNum(t.group)}. Horario según basquetcatala.cat a ${new Date(DATA.scrapedAt).toLocaleDateString('es-ES')}; puede cambiar.`)}`,
+      `DESCRIPTION:${text(`Cadet Interterritorial ${t.gender === 'M' ? 'masculí' : 'femení'} · Grup ${groupNum(t.group)}. ${tr('Horario según basquetcatala.cat a {d}; puede cambiar.', { d: new Date(DATA.scrapedAt).toLocaleDateString(LOCALE()) })}`)}`,
       'END:VEVENT'];
   }).flat();
   const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Cadet Interterritorial//ES', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
@@ -1387,9 +1588,11 @@ function downloadICS(tid) {
   });
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  toast(`📅 ${games.length} partido${games.length > 1 ? 's' : ''} exportado${games.length > 1 ? 's' : ''}`);
+  toast(tr(games.length > 1 ? '📅 {n} partidos exportados' : '📅 {n} partido exportado', { n: games.length }));
 }
 
+applyStaticLang();
+updateMapHint();
 initSplitters();
 initSearch();
 applyA11y();
@@ -1405,7 +1608,7 @@ fetch('https://cdn.jsdelivr.net/npm/es-atlas@0.6.0/es/municipalities.json')
   .then(initMap)
   .catch(err => {
     console.error('Map load error:', err);
-    document.getElementById('map-hint').textContent = '⚠ No se pudo cargar el mapa de municipios';
+    document.getElementById('map-hint').textContent = tr('⚠ No se pudo cargar el mapa de municipios');
   });
 </script>
 </body>

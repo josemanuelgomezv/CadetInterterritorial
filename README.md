@@ -65,6 +65,7 @@ Al pinchar un municipio con varios equipos se muestra la lista para elegir uno; 
 - **Lectores de pantalla**: encabezados, etiquetas descriptivas ("2º CB Banyoles, Banyoles: 3 ganados, 3 perdidos, 9 puntos") y avisos de la selección actual
 
 ### Otros
+- **Idioma**: catalán (por defecto) o castellano, con el botón **CA · ES** de la cabecera; se recuerda en el navegador. Los textos se escriben en castellano en el código y pasan por `tr()`, que busca su versión catalana en la tabla `CA` de `index.html`
 - Diseño de escritorio en dos columnas: a la izquierda la clasificación con el mapa debajo, y la ficha de equipo como zona principal
 - La columna izquierda se puede ensanchar arrastrando el separador (doble clic restablece el ancho; también con las flechas del teclado); el mapa crece con ella. El ancho se recuerda, y cuando hay varios equipos se muestran en dos columnas
 - Tema claro / oscuro
