@@ -143,7 +143,8 @@
     const out = [];
     for (let i = h + 10; i + 12 < L.length; i++) {
       const v = L.slice(i + 1, i + 13);
-      if (num(L[i]) || L[i].length < 3 || !SHAPE.every((re, k) => re.test(v[k]))) continue;
+      // La cabecera "Jugadors/es inscrits/es" a veces va justo antes de una fila con este formato
+      if (num(L[i]) || L[i].length < 3 || L[i].includes('/') || !SHAPE.every((re, k) => re.test(v[k]))) continue;
       out.push({ n: shortName(L[i]), pj: +v[0], min: +v[1], pts: +v[3], fcpg: +v[5], tl: pair(v[7]), t2: pair(v[9])[0], t3: pair(v[11])[0] });
       i += 12;
     }

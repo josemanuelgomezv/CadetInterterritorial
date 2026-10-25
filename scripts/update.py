@@ -9,9 +9,14 @@ Uso:
   python3 scripts/update.py                  # actualiza los datos
   python3 scripts/update.py --push           # y además hace commit y push
   python3 scripts/update.py ruta/al/archivo.json
+  python3 scripts/update.py --force          # actualiza aunque la validación encuentre errores
+
+Antes de cambiar nada se validan los datos nuevos (ver validate()): con errores
+no se toca ningún archivo; los avisos solo se muestran.
 """
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -36,10 +41,133 @@ def summary(d):
     return len(d['teams']), len(d['groups']), played
 
 
+DATE = re.compile(r'^\d\d-\d\d-\d{4}( \d\d:\d\d)?$')
+# Nombre de pila + inicial del apellido ("Pol H.", "Maria del Mar R.") o solo iniciales ("N.A.R.")
+SHORT_NAME = re.compile(r"^[^\W\d_][\w'’.-]*( [\w'’.-]+)* [^\W\d_]\.$|^([^\W\d_]\.)+$")
+ODD_NAME = re.compile(r"[^\w '’.-]|\d")
+
+
+def played(m):
+    return m.get('hs') is not None
+
+
+def match_date(m):
+    d, mo, y = m['dt'][:10].split('-')
+    return f'{y}-{mo}-{d}'
+
+
+def validate(new, old):
+    """Devuelve (errores, avisos). Un error indica que la extracción ha fallado o que se
+    filtraría algo que no debe publicarse; un aviso, algo raro pero posible en la web."""
+    errors, warnings = [], []
+    teams, groups = new.get('teams') or {}, new.get('groups') or []
+    if not groups or not teams:
+        return ['no hay datos de grupos o equipos'], []
+    for k in ('season', 'scrapedAt'):
+        if not new.get(k):
+            errors.append(f'falta el campo {k}')
+    today = (new.get('scrapedAt') or '9999')[:10]
+
+    def where(g, m=None):
+        name = f"{'Masc' if g.get('gender') == 'M' else 'Fem'} {g.get('name')}"
+        if m:
+            name += f" · {teams.get(m.get('h'), {}).get('name', m.get('h'))} - {teams.get(m.get('a'), {}).get('name', m.get('a'))}"
+        return name
+
+    # Estructura de grupos, clasificaciones y partidos
+    seen = set()
+    for g in groups:
+        if g.get('gender') not in ('M', 'F'):
+            errors.append(f"{where(g)}: género desconocido {g.get('gender')!r}")
+        if not g.get('standings') or not g.get('matches'):
+            errors.append(f'{where(g)}: sin clasificación o sin partidos')
+        for s in g.get('standings', []):
+            if s.get('id') not in teams:
+                errors.append(f"{where(g)}: equipo {s.get('id')} de la clasificación sin ficha")
+            elif s['j'] != s['w'] + s['l'] + s['np']:
+                errors.append(f"{where(g)}: {teams[s['id']]['name']} tiene {s['j']} jugados ≠ {s['w']}G + {s['l']}P + {s['np']}NP")
+            elif s['pts'] != 2 * s['w'] + s['l']:
+                warnings.append(f"{where(g)}: {teams[s['id']]['name']} tiene {s['pts']} puntos y le tocarían {2 * s['w'] + s['l']} (¿sanción?)")
+        games = {}
+        for m in g.get('matches', []):
+            if m.get('h') not in teams or m.get('a') not in teams:
+                errors.append(f'{where(g, m)}: equipo sin ficha')
+                continue
+            key = (g['gid'], m['h'], m['a'])
+            if key in seen:
+                warnings.append(f'{where(g, m)}: partido repetido')
+            seen.add(key)
+            if m['dt'] and not DATE.match(m['dt']):
+                errors.append(f"{where(g, m)}: fecha con formato raro {m['dt']!r}")
+            if (m.get('hs') is None) != (m.get('as') is None):
+                errors.append(f'{where(g, m)}: marcador a medias')
+            elif played(m):
+                if not (0 <= m['hs'] <= 250 and 0 <= m['as'] <= 250):
+                    errors.append(f"{where(g, m)}: marcador imposible {m['hs']}-{m['as']}")
+                if not m['dt']:
+                    warnings.append(f'{where(g, m)}: jugado y sin fecha')
+                elif match_date(m) > today:
+                    errors.append(f"{where(g, m)}: tiene resultado pero es del {m['dt'][:10]}, en el futuro")
+                games[m['h']] = games.get(m['h'], 0) + 1
+                games[m['a']] = games.get(m['a'], 0) + 1
+            bx = m.get('bx')
+            if bx:
+                hs, as_ = (sum(p['pts'] for p in bx[k]) for k in ('h', 'a'))
+                # 0-0: partido sin estadísticas (p. ej., 20-0 por incomparecencia)
+                if played(m) and (hs, as_) != (0, 0) and (hs, as_) != (m['hs'], m['as']):
+                    msg = f"{where(g, m)}: los puntos de los jugadores ({hs}-{as_}) no cuadran con el marcador ({m['hs']}-{m['as']})"
+                    (errors if (hs, as_) == (m['as'], m['hs']) else warnings).append(msg + (' (equipos cruzados)' if (hs, as_) == (m['as'], m['hs']) else ''))
+        for s in g.get('standings', []):
+            if s.get('id') in teams and games.get(s['id'], 0) != s['j']:
+                warnings.append(f"{where(g)}: {teams[s['id']]['name']} tiene {games.get(s['id'], 0)} resultados y {s['j']} jugados en la clasificación (¿clasificación sin actualizar?)")
+
+    # Fichas de equipo y nombres de jugadores (son menores: solo nombre abreviado)
+    names = [(t['name'], p['n']) for t in teams.values() for p in t.get('players', [])]
+    names += [(where(g, m), p['n']) for g in groups for m in g['matches'] if m.get('bx') for k in ('h', 'a') for p in m['bx'][k]]
+    for who, n in names:
+        if ODD_NAME.search(n):
+            warnings.append(f'{who}: nombre de jugador raro {n!r} (¿una cabecera de la tabla?)')
+        elif not SHORT_NAME.match(n) or len(n.split()) > 4:
+            errors.append(f'{who}: nombre de jugador sin abreviar {n!r}')
+    no_venue = [t['name'] for t in teams.values() if not t.get('venue')]
+    if no_venue:
+        warnings.append(f"{len(no_venue)} equipos sin pabellón: {', '.join(no_venue[:5])}")
+
+    # Comparación con los datos actuales (misma temporada): una extracción a medias
+    # suele notarse en que desaparecen cosas
+    if old and old.get('season') != new.get('season'):
+        warnings.append(f"cambio de temporada: {old.get('season')} → {new.get('season')}")
+    elif old:
+        lost = [old['teams'][i]['name'] for i in old['teams'] if i not in teams]
+        if lost:
+            errors.append(f"desaparecen {len(lost)} equipos: {', '.join(lost[:5])}")
+        gids = {g['gid'] for g in groups}
+        lost = [where(g) for g in old['groups'] if g['gid'] not in gids]
+        if lost:
+            errors.append(f"desaparecen {len(lost)} grupos: {', '.join(lost)}")
+        now = {(g['gid'], m['h'], m['a']): m for g in groups for m in g['matches']}
+        for g in old['groups']:
+            for m in g['matches']:
+                n = now.get((g['gid'], m['h'], m['a']))
+                if not played(m) or (n and played(n) and (n['hs'], n['as']) == (m['hs'], m['as'])):
+                    continue
+                if not n or not played(n):
+                    errors.append(f"{where(g, m)}: tenía resultado ({m['hs']}-{m['as']}) y ya no")
+                else:
+                    warnings.append(f"{where(g, m)}: el resultado cambia de {m['hs']}-{m['as']} a {n['hs']}-{n['as']}")
+        lost = [t['name'] for i, t in teams.items() if not t.get('players') and old['teams'].get(i, {}).get('players')]
+        if len(lost) > len(teams) // 10:
+            errors.append(f'{len(lost)} equipos se quedan sin estadísticas de jugadores (¿falló la extracción?)')
+        elif lost:
+            warnings.append(f"equipos que se quedan sin estadísticas de jugadores: {', '.join(lost)}")
+    return errors, warnings
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('file', nargs='?', type=Path, help='fcbq_raw.json descargado (por defecto, el más reciente de Descargas)')
     ap.add_argument('--push', action='store_true', help='hacer commit y push de los datos')
+    ap.add_argument('--force', action='store_true', help='actualizar aunque la validación encuentre errores')
     opts = ap.parse_args()
 
     src = opts.file
@@ -51,11 +179,16 @@ def main():
         src = found[-1]
 
     new = json.loads(src.read_text(encoding='utf-8'))
-    if not new.get('groups') or not new.get('teams'):
-        sys.exit(f'{src} no tiene datos de grupos o equipos; no se cambia nada')
     old = json.loads(RAW.read_text(encoding='utf-8')) if RAW.exists() else None
-    if old and new['scrapedAt'] < old['scrapedAt']:
-        sys.exit(f"{src} es del {new['scrapedAt'][:10]}, más antiguo que los datos actuales ({old['scrapedAt'][:10]})")
+    if old and new.get('scrapedAt', '') < old['scrapedAt']:
+        sys.exit(f"{src} es del {new.get('scrapedAt', '?')[:10]}, más antiguo que los datos actuales ({old['scrapedAt'][:10]})")
+    errors, warnings = validate(new, old)
+    for w in warnings:
+        print(f'Aviso: {w}')
+    for e in errors:
+        print(f'ERROR: {e}', file=sys.stderr)
+    if errors and not opts.force:
+        sys.exit(f'{len(errors)} errores en {src}; no se cambia nada (--force para actualizar igualmente)')
 
     print(f'Usando {src}', flush=True)
     shutil.copyfile(src, RAW)

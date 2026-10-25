@@ -104,6 +104,14 @@ Los datos son una **copia estática** (`data/cadet-data.js`). basquetcatala.cat 
 
    Coge el `fcbq_raw*.json` más reciente de la carpeta de descargas (o el que se le pase como argumento), lo copia a `data/fcbq_raw.json`, ejecuta `build_data.py` y muestra cuántos partidos nuevos hay. Sin `--push` solo actualiza los archivos.
 
+   Antes de tocar nada **valida los datos nuevos**. Si encuentra errores no cambia ningún archivo (`--force` para actualizar igualmente):
+   - estructura: grupos sin partidos, equipos sin ficha, marcadores imposibles o a medias, fechas mal formadas, resultados con fecha futura;
+   - nombres de jugadores sin abreviar (son menores);
+   - estadísticas de un partido con los equipos cruzados (los puntos de los jugadores dan el marcador al revés);
+   - comparado con los datos actuales: equipos o grupos que desaparecen, partidos que pierden el resultado o muchos equipos que se quedan sin estadísticas (señal de que la extracción ha fallado).
+
+   Lo que es raro pero puede pasar en la web solo da un **aviso**: puntos que no cuadran con las victorias (sanciones), clasificación sin actualizar, resultados corregidos, partidos sin fecha, nombres que parecen cabeceras de tabla…
+
 El extractor localiza la categoría por su nombre ("Cadet … Interterritorial") en la temporada actual, así que sirve también para temporadas futuras mientras la web mantenga su estructura.
 
 ---
