@@ -26,153 +26,153 @@ END:STANDARD
 END:VTIMEZONE
 BEGIN:VEVENT
 UID:fcbq-23372-89419-88601@cadet-interterritorial
-DTSTAMP:20261024T223810Z
+DTSTAMP:20261025T163414Z
 DTSTART;TZID=Europe/Madrid:20260913T161500
 DTEND;TZID=Europe/Madrid:20260913T174500
 SUMMARY:🏀 FISIOCOOL - C.B. GAVÀ 72-65 CE XAMBA A - LA VISTA
 LOCATION:PAVELLO CAN TINTORE\, RAMBLA POMPEU FABRA\,  144\, 08850 Gavà
 DESCRIPTION:Cadet Interterritorial femenino · Grup 03. Horario según basq
- uetcatala.cat a 24/10/2026\; puede cambiar.
+ uetcatala.cat a 25/10/2026\; puede cambiar.
 END:VEVENT
 BEGIN:VEVENT
 UID:fcbq-23372-88601-88492@cadet-interterritorial
-DTSTAMP:20261024T223810Z
+DTSTAMP:20261025T163414Z
 DTSTART;TZID=Europe/Madrid:20260920T120000
 DTEND;TZID=Europe/Madrid:20260920T133000
 SUMMARY:🏀 CE XAMBA A - LA VISTA 59-63 CB VALLS SEVEN SEAS INVEST
 LOCATION:PAVELLO NOU  LA GAMBA\, AV. CATALUNYA S/N\, 08720 Vilafranca del P
  enedès
 DESCRIPTION:Cadet Interterritorial femenino · Grup 03. Horario según basq
- uetcatala.cat a 24/10/2026\; puede cambiar.
+ uetcatala.cat a 25/10/2026\; puede cambiar.
 END:VEVENT
 BEGIN:VEVENT
 UID:fcbq-23372-91026-88601@cadet-interterritorial
-DTSTAMP:20261024T223810Z
+DTSTAMP:20261025T163414Z
 DTSTART;TZID=Europe/Madrid:20260926T120000
 DTEND;TZID=Europe/Madrid:20260926T133000
 SUMMARY:🏀 CB TARRAGONA 69-39 CE XAMBA A - LA VISTA
 LOCATION:TARRAGONA - PAVELLO DEL SERRALLO\, JOSEP CATALA I RUFA S/N\, 43004
   Tarragona
 DESCRIPTION:Cadet Interterritorial femenino · Grup 03. Horario según basq
- uetcatala.cat a 24/10/2026\; puede cambiar.
+ uetcatala.cat a 25/10/2026\; puede cambiar.
 END:VEVENT
 BEGIN:VEVENT
 UID:fcbq-23372-88601-91414@cadet-interterritorial
-DTSTAMP:20261024T223810Z
+DTSTAMP:20261025T163414Z
 DTSTART;TZID=Europe/Madrid:20261203T200000
 DTEND;TZID=Europe/Madrid:20261203T213000
 SUMMARY:🏀 CE XAMBA A - LA VISTA – CB. CORNELLÀ A
 LOCATION:PAVELLO NOU  LA GAMBA\, AV. CATALUNYA S/N\, 08720 Vilafranca del P
  enedès
 DESCRIPTION:Cadet Interterritorial femenino · Grup 03. Horario según basq
- uetcatala.cat a 24/10/2026\; puede cambiar.
+ uetcatala.cat a 25/10/2026\; puede cambiar.
 END:VEVENT
 BEGIN:VEVENT
 UID:fcbq-23372-89086-88601@cadet-interterritorial
-DTSTAMP:20261024T223810Z
+DTSTAMP:20261025T163414Z
 DTSTART;TZID=Europe/Madrid:20261011T160000
 DTEND;TZID=Europe/Madrid:20261011T173000
 SUMMARY:🏀 BASKET ALMEDA 2 73-52 CE XAMBA A - LA VISTA
 LOCATION:PAVELLO ALMEDA\, SANT FERRAN 45 BIS\, 08940 Cornellà de Llobregat
 DESCRIPTION:Cadet Interterritorial femenino · Grup 03. Horario según basq
- uetcatala.cat a 24/10/2026\; puede cambiar.
+ uetcatala.cat a 25/10/2026\; puede cambiar.
 END:VEVENT
 BEGIN:VEVENT
 UID:fcbq-23372-89353-88601@cadet-interterritorial
-DTSTAMP:20261024T223810Z
+DTSTAMP:20261025T163414Z
 DTSTART;TZID=Europe/Madrid:20261018T104500
 DTEND;TZID=Europe/Madrid:20261018T121500
 SUMMARY:🏀 CAMPING LA LLOSA - C.B. CAMBRILS A 80-57 CE XAMBA A - LA VISTA
 LOCATION:CAMBRILS - PAVELLÓ MUNICIPAL\, PLAÇA DE L'AJUNTAMENT\, 1\, 43850
   Cambrils
 DESCRIPTION:Cadet Interterritorial femenino · Grup 03. Horario según basq
- uetcatala.cat a 24/10/2026\; puede cambiar.
+ uetcatala.cat a 25/10/2026\; puede cambiar.
 END:VEVENT
 BEGIN:VEVENT
 UID:fcbq-23372-88601-89256@cadet-interterritorial
-DTSTAMP:20261024T223810Z
+DTSTAMP:20261025T163414Z
 DTSTART;TZID=Europe/Madrid:20261025T190000
 DTEND;TZID=Europe/Madrid:20261025T203000
 SUMMARY:🏀 CE XAMBA A - LA VISTA – CB VILADECANS VERD
 LOCATION:PAVELLO NOU  LA GAMBA\, AV. CATALUNYA S/N\, 08720 Vilafranca del P
  enedès
 DESCRIPTION:Cadet Interterritorial femenino · Grup 03. Horario según basq
- uetcatala.cat a 24/10/2026\; puede cambiar.
+ uetcatala.cat a 25/10/2026\; puede cambiar.
 END:VEVENT
 BEGIN:VEVENT
 UID:fcbq-23372-88601-89419@cadet-interterritorial
-DTSTAMP:20261024T223810Z
+DTSTAMP:20261025T163414Z
 DTSTART;TZID=Europe/Madrid:20261031T103000
 DTEND;TZID=Europe/Madrid:20261031T120000
 SUMMARY:🏀 CE XAMBA A - LA VISTA – FISIOCOOL - C.B. GAVÀ
 LOCATION:PAVELLO NOU  LA GAMBA\, AV. CATALUNYA S/N\, 08720 Vilafranca del P
  enedès
 DESCRIPTION:Cadet Interterritorial femenino · Grup 03. Horario según basq
- uetcatala.cat a 24/10/2026\; puede cambiar.
+ uetcatala.cat a 25/10/2026\; puede cambiar.
 END:VEVENT
 BEGIN:VEVENT
 UID:fcbq-23372-88492-88601@cadet-interterritorial
-DTSTAMP:20261024T223810Z
+DTSTAMP:20261025T163414Z
 DTSTART;TZID=Europe/Madrid:20261108T104500
 DTEND;TZID=Europe/Madrid:20261108T121500
 SUMMARY:🏀 CB VALLS SEVEN SEAS INVEST – CE XAMBA A - LA VISTA
 LOCATION:VALLS - PAVELLO JOANA BALLART\, CARRER DEL VILAR S/N\, 43800 Valls
 DESCRIPTION:Cadet Interterritorial femenino · Grup 03. Horario según basq
- uetcatala.cat a 24/10/2026\; puede cambiar.
+ uetcatala.cat a 25/10/2026\; puede cambiar.
 END:VEVENT
 BEGIN:VEVENT
 UID:fcbq-23372-88601-91026@cadet-interterritorial
-DTSTAMP:20261024T223810Z
+DTSTAMP:20261025T163414Z
 DTSTART;TZID=Europe/Madrid:20261115T120000
 DTEND;TZID=Europe/Madrid:20261115T133000
 SUMMARY:🏀 CE XAMBA A - LA VISTA – CB TARRAGONA
 LOCATION:PAVELLO NOU  LA GAMBA\, AV. CATALUNYA S/N\, 08720 Vilafranca del P
  enedès
 DESCRIPTION:Cadet Interterritorial femenino · Grup 03. Horario según basq
- uetcatala.cat a 24/10/2026\; puede cambiar.
+ uetcatala.cat a 25/10/2026\; puede cambiar.
 END:VEVENT
 BEGIN:VEVENT
 UID:fcbq-23372-91414-88601@cadet-interterritorial
-DTSTAMP:20261024T223810Z
+DTSTAMP:20261025T163414Z
 DTSTART;TZID=Europe/Madrid:20261122T104500
 DTEND;TZID=Europe/Madrid:20261122T121500
 SUMMARY:🏀 CB. CORNELLÀ A – CE XAMBA A - LA VISTA
 LOCATION:PAV. MUNICIPAL CORNELLA CENTRO\, MARQUES DE CORNELLA\,  S/N\, 0894
  0 Cornellà de Llobregat
 DESCRIPTION:Cadet Interterritorial femenino · Grup 03. Horario según basq
- uetcatala.cat a 24/10/2026\; puede cambiar.
+ uetcatala.cat a 25/10/2026\; puede cambiar.
 END:VEVENT
 BEGIN:VEVENT
 UID:fcbq-23372-88601-89086@cadet-interterritorial
-DTSTAMP:20261024T223810Z
+DTSTAMP:20261025T163414Z
 DTSTART;TZID=Europe/Madrid:20261129T120000
 DTEND;TZID=Europe/Madrid:20261129T133000
 SUMMARY:🏀 CE XAMBA A - LA VISTA – BASKET ALMEDA 2
 LOCATION:PAVELLO NOU  LA GAMBA\, AV. CATALUNYA S/N\, 08720 Vilafranca del P
  enedès
 DESCRIPTION:Cadet Interterritorial femenino · Grup 03. Horario según basq
- uetcatala.cat a 24/10/2026\; puede cambiar.
+ uetcatala.cat a 25/10/2026\; puede cambiar.
 END:VEVENT
 BEGIN:VEVENT
 UID:fcbq-23372-88601-89353@cadet-interterritorial
-DTSTAMP:20261024T223810Z
+DTSTAMP:20261025T163414Z
 DTSTART;TZID=Europe/Madrid:20261213T120000
 DTEND;TZID=Europe/Madrid:20261213T133000
 SUMMARY:🏀 CE XAMBA A - LA VISTA – CAMPING LA LLOSA - C.B. CAMBRILS A
 LOCATION:PAVELLO NOU  LA GAMBA\, AV. CATALUNYA S/N\, 08720 Vilafranca del P
  enedès
 DESCRIPTION:Cadet Interterritorial femenino · Grup 03. Horario según basq
- uetcatala.cat a 24/10/2026\; puede cambiar.
+ uetcatala.cat a 25/10/2026\; puede cambiar.
 END:VEVENT
 BEGIN:VEVENT
 UID:fcbq-23372-89256-88601@cadet-interterritorial
-DTSTAMP:20261024T223810Z
+DTSTAMP:20261025T163414Z
 DTSTART;TZID=Europe/Madrid:20261220T160000
 DTEND;TZID=Europe/Madrid:20261220T173000
 SUMMARY:🏀 CB VILADECANS VERD – CE XAMBA A - LA VISTA
 LOCATION:PODIUM VILADECANSESPORTS JOAN MASGRAU\, c/ POMPEU FABRA\, 5\, 0884
  0 Viladecans
 DESCRIPTION:Cadet Interterritorial femenino · Grup 03. Horario según basq
- uetcatala.cat a 24/10/2026\; puede cambiar.
+ uetcatala.cat a 25/10/2026\; puede cambiar.
 END:VEVENT
 END:VCALENDAR
